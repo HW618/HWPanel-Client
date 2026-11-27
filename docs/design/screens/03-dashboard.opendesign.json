@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-dashboard",
+  "name": "单机概览页（Tab 1）",
+  "route": "/tabs/overview",
+  "activeTab": "overview",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": true,
+    "tabBarCount": 5,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true,
+    "autoPolling": { "defaultIntervalSec": 5, "pauseInBackgroundOrOtherTab": true }
+  },
+  "states": ["loading", "content", "offlineError", "switchServerSheet"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": {
+        "type": "ServerSwitchPill",
+        "id": "pill-server-switch",
+        "height": 40,
+        "bgToken": "bg.pillGlass",
+        "radiusToken": "radius.pill",
+        "content": ["StatusDot(online)", "ServerName(truncate)", "ChevronDown"],
+        "opensSheet": "sheet-server-switcher"
+      },
+      "right": [
+        { "type": "LiveBadge", "text": "5s 实时" },
+        { "type": "IconButton", "id": "btn-refresh", "icon": "refresh-cw", "ariaLabel": "手动刷新" }
+      ]
+    },
+    "body": [
+      {
+        "type": "HostGreetingStrip",
+        "title": "{{server.hostname}}",
+        "subtitle": "{{server.os}} · 运行 {{server.uptime}} · 1Panel {{server.panelVersion}}"
+      },
+      {
+        "type": "ResourceOverviewCard",
+        "id": "card-core-resources",
+        "radiusToken": "radius.lg",
+        "bgToken": "bg.surface",
+        "title": "核心资源",
+        "hint": "点击任意指标查看趋势与明细",
+        "rings": [
+          {
+            "id": "ring-cpu",
+            "label": "CPU",
+            "percentBind": "metrics.cpu.percent",
+            "subtextBind": "{{metrics.cpu.cores}} 核",
+            "thresholdColoring": true,
+            "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "cpu" } }
+          },
+          {
+            "id": "ring-memory",
+            "label": "内存",
+            "percentBind": "metrics.memory.percent",
+            "subtextBind": "{{metrics.memory.usedGB}}/{{metrics.memory.totalGB}} GB",
+            "thresholdColoring": true,
+            "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "memory" } }
+          },
+          {
+            "id": "ring-disk",
+            "label": "磁盘",
+            "percentBind": "metrics.disk.rootPercent",
+            "subtextBind": "{{metrics.disk.rootUsed}}/{{metrics.disk.rootTotal}}",
+            "thresholdColoring": true,
+            "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "disk" } }
+          }
+        ],
+        "miniStrip": {
+          "columns": 2,
+          "items": [
+            { "label": "系统负载 (1/5/15m)", "valueBind": "metrics.loadDisplay", "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "cpu" } } },
+            { "label": "Swap 交换分区", "valueBind": "{{metrics.swap.used}} / {{metrics.swap.total}} ({{metrics.swap.percent}}%)", "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "memory" } } }
+          ]
+        }
+      },
+      {
+        "type": "TwoColumnCardRow",
+        "gapToken": "spacing.3",
+        "items": [
+          {
+            "type": "MetricSummaryCard",
+            "id": "card-network",
+            "title": "网络流量",
+            "badge": "{{metrics.network.interfaceName}}",
+            "rows": [
+              { "label": "↑ 上行", "valueBind": "metrics.network.upSpeed", "colorToken": "chart.netUp" },
+              { "label": "↓ 下行", "valueBind": "metrics.network.downSpeed", "colorToken": "chart.netDown" }
+            ],
+            "footer": "累计 ↑{{metrics.network.totalSent}} · ↓{{metrics.network.totalRecv}}",
+            "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "network" } }
+          },
+          {
+            "type": "MetricSummaryCard",
+            "id": "card-disk-io",
+            "title": "磁盘读写 I/O",
+            "badge": "{{metrics.disk.mountCount}} 个挂载点",
+            "rows": [
+              { "label": "读取", "valueBind": "metrics.disk.readSpeed" },
+              { "label": "写入", "valueBind": "metrics.disk.writeSpeed" }
+            ],
+            "footer": "点击查看全部挂载点",
+            "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "disk" } }
+          }
+        ]
+      },
+      {
+        "type": "ProcessTopCard",
+        "id": "card-process-top5",
+        "radiusToken": "radius.lg",
+        "title": "进程 Top 5",
+        "readOnly": true,
+        "headerRight": {
+          "type": "MiniSegmented",
+          "options": [
+            { "value": "cpu", "label": "按 CPU" },
+            { "value": "memory", "label": "按内存" }
+          ]
+        },
+        "columns": ["进程名 / PID", "CPU", "内存"],
+        "maxRows": 5,
+        "footerLink": {
+          "label": "查看完整进程列表（只读）",
+          "onPress": { "navigate": "screen-metric-drilldown", "params": { "tab": "processes" } }
+        }
+      }
+    ]
+  },
+  "stateVariants": {
+    "switchServerSheet": {
+      "id": "sheet-server-switcher",
+      "type": "BottomSheet",
+      "title": "切换服务器",
+      "elements": [
+        "ServerRadioList(showing online dot, name, address, default badge)",
+        "ActionRow: 查看全部面板 -> screen-servers-overview",
+        "ActionRow: 添加新面板 -> screen-server-connect"
+      ]
+    },
+    "offlineError": {
+      "component": "ErrorBannerCard",
+      "title": "当前面板暂时无法连接",
+      "actions": ["立即重试", "检查连接设置", "切换其他服务器"]
+    }
+  },
+  "acceptanceRefs": ["AC-01.3", "AC-03.1", "AC-03.2", "AC-03.3", "AC-08"]
+}

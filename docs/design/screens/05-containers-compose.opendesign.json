@@ -1,0 +1,114 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-containers-compose",
+  "name": "容器与编排列表页（Tab 2）",
+  "route": "/tabs/containers",
+  "activeTab": "containers",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": true,
+    "tabBarCount": 5,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true
+  },
+  "states": ["containersList", "composeList", "loading", "empty", "error", "deleteContainerModal", "deleteComposeModal", "rebuildComposeModal"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "ServerSwitchPill", "compact": true },
+      "title": "容器与编排",
+      "right": [{ "type": "IconButton", "icon": "refresh-cw", "ariaLabel": "刷新列表" }]
+    },
+    "body": [
+      {
+        "type": "SegmentedControl",
+        "id": "container-mode-segment",
+        "options": [
+          { "value": "containers", "label": "容器 ({{counts.containers}})" },
+          { "value": "compose", "label": "编排 ({{counts.compose}})" }
+        ]
+      },
+      {
+        "type": "SearchPill",
+        "placeholderByMode": {
+          "containers": "搜索容器名称或镜像",
+          "compose": "搜索 Compose 编排名称"
+        }
+      },
+      {
+        "type": "FilterChipRail",
+        "optionsByMode": {
+          "containers": ["全部", "运行中", "已停止", "异常"],
+          "compose": ["全部", "运行中", "部分运行", "已停止"]
+        }
+      },
+      {
+        "type": "ConditionalList",
+        "branches": {
+          "containers": {
+            "itemComponent": {
+              "type": "ContainerCard",
+              "radiusToken": "radius.lg",
+              "onPress": { "navigate": "screen-container-compose-detail", "params": { "kind": "container", "id": "{{item.id}}" } },
+              "fields": ["StatusDot + Name", "StatusChip(运行中/已停止/异常)", "ImageTag(mono)", "PortsSummary", "CpuMemMiniRow(when running)"],
+              "actions": [
+                { "id": "start-or-stop", "dynamicLabel": "运行中→停止 / 已停止→启动", "variant": "primary-or-soft" },
+                { "id": "restart", "label": "重启", "variant": "secondary" },
+                { "id": "logs", "label": "日志", "navigate": "screen-container-compose-detail", "tab": "logs" },
+                { "id": "delete", "label": "删除", "danger": true, "opensModal": "modal-delete-container" }
+              ]
+            }
+          },
+          "compose": {
+            "itemComponent": {
+              "type": "ComposeCard",
+              "radiusToken": "radius.lg",
+              "onPress": { "navigate": "screen-container-compose-detail", "params": { "kind": "compose", "id": "{{item.id}}" } },
+              "fields": ["StatusDot + ComposeName", "StatusChip", "ContainerRatio({{item.running}}/{{item.total}} 容器)", "UpdatedAt"],
+              "actions": [
+                { "id": "start-or-stop", "dynamicLabel": "运行中→停止 / 已停止→启动" },
+                { "id": "restart", "label": "重启" },
+                { "id": "rebuild", "label": "重建", "opensModal": "modal-rebuild-compose" },
+                { "id": "edit-yaml", "label": "编辑 YAML", "navigate": "screen-container-compose-detail", "tab": "yaml" },
+                { "id": "logs", "label": "日志", "navigate": "screen-container-compose-detail", "tab": "logs" },
+                { "id": "delete", "label": "删除", "danger": true, "opensModal": "modal-delete-compose" }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "stateVariants": {
+    "deleteContainerModal": {
+      "id": "modal-delete-container",
+      "type": "DangerConfirmDialog",
+      "title": "确认删除容器？",
+      "message": "将永久删除容器「{{target.name}}」，容器内未挂载持久化的数据将不可恢复。",
+      "optionalCheckbox": {
+        "visibleWhen": "target.state == 'running'",
+        "label": "强制删除运行中的容器",
+        "defaultChecked": false
+      },
+      "confirmLabel": "确认删除"
+    },
+    "deleteComposeModal": {
+      "id": "modal-delete-compose",
+      "type": "DangerConfirmDialog",
+      "title": "确认删除编排？",
+      "message": "将停止并移除编排「{{target.name}}」下的 {{target.total}} 个容器及相关网络配置，操作不可恢复。",
+      "confirmLabel": "确认删除"
+    },
+    "rebuildComposeModal": {
+      "id": "modal-rebuild-compose",
+      "type": "WarningConfirmDialog",
+      "title": "确认重建编排？",
+      "message": "将重新构建并重启「{{target.name}}」的服务，重建期间关联业务会出现短暂中断。",
+      "confirmLabel": "确认重建"
+    }
+  },
+  "excludedFromMvp": ["新建单容器入口", "新建编排入口", "Web Terminal 入口"],
+  "acceptanceRefs": ["AC-04.1", "AC-04.3", "AC-08"]
+}

@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-app-store",
+  "name": "应用商店与已安装应用（Tab 3）",
+  "route": "/tabs/apps",
+  "activeTab": "apps",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": true,
+    "tabBarCount": 5,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true
+  },
+  "states": ["storeCatalog", "installedList", "appDetailSubpage", "appInstallFormSubpage", "taskProgressLogSubpage", "installedDetailSubpage", "upgradeSheet", "uninstallDangerModal"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "ServerSwitchPill", "compact": true },
+      "title": "应用商店",
+      "right": [{ "type": "IconButton", "icon": "refresh-cw", "ariaLabel": "同步应用列表" }]
+    },
+    "body": [
+      {
+        "type": "SegmentedControl",
+        "id": "apps-mode-segment",
+        "options": [
+          { "value": "store", "label": "应用商店" },
+          { "value": "installed", "label": "已安装 ({{counts.installed}})", "badgeWhenPositive": "{{counts.upgradable}} 可升级" }
+        ]
+      },
+      {
+        "type": "SearchPill",
+        "placeholder": "搜索应用名称、标签或描述"
+      },
+      {
+        "type": "HorizontalCategoryRail",
+        "visibleWhen": "mode == 'store'",
+        "source": "dynamic(GET /api/v2/apps/tags)",
+        "pinnedLeading": ["全部", "推荐"],
+        "fallbackPreview": ["全部", "推荐", "建站", "数据库", "工具", "开发", "AI", "监控"]
+      },
+      {
+        "type": "FilterChipRail",
+        "visibleWhen": "mode == 'installed'",
+        "items": ["全部", "运行中", "可升级", "已停止"]
+      },
+      {
+        "type": "ConditionalList",
+        "branches": {
+          "store": {
+            "itemComponent": {
+              "type": "AppCatalogCard",
+              "radiusToken": "radius.lg",
+              "onPress": { "subpage": "appDetail", "route": "/tabs/apps/catalog/:appId" },
+              "elements": ["AppIcon(48x48, r=14)", "Name + CategoryChip + InstalledTag", "TwoLineDescription", "InstallOrViewButton(-> subpages.appInstallForm)"]
+            }
+          },
+          "installed": {
+            "itemComponent": {
+              "type": "InstalledAppCard",
+              "radiusToken": "radius.lg",
+              "onPress": { "subpage": "installedDetail", "route": "/tabs/apps/installed/:instanceId" },
+              "elements": ["AppIcon", "InstanceName + StatusChip", "AppType + CurrentVersion + UpgradableBadge", "QuickActions(启动/停止、升级->upgradeSheet、详情->subpages.installedDetail)"]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "subpages": {
+    "appDetail": {
+      "route": "/tabs/apps/catalog/:appId",
+      "sections": [
+        "HeroHeader(图标、名称、版本下拉选择器、系统要求标签: 架构/内存)",
+        "DescriptionCard(应用简介与参数概览)",
+        "StickyBottomBar(PrimaryButton: 安装此应用 -> subpages.appInstallForm)"
+      ]
+    },
+    "appInstallForm": {
+      "route": "/tabs/apps/catalog/:appId/install",
+      "sections": [
+        "FormCard(实例名称含重名校验、目标版本)",
+        "DynamicRequiredParamsCard(动态渲染端口、密码、数据目录、依赖组件下拉、外部端口放行开关；支持失焦与提交前内联校验)",
+        "StickyBottomBar(PrimaryButton: 开始安装 -> subpages.taskProgressLog)"
+      ],
+      "excludedFromMvp": ["高级 Compose 覆盖编辑器", "私有/自定义仓库切换"]
+    },
+    "taskProgressLog": {
+      "route": "/tabs/apps/tasks/:taskId",
+      "sections": [
+        "TaskStatusCard(进行中/成功/失败徽标、阶段进度条、taskId)",
+        "LogStreamBox(深色等宽实时日志、自动滚底、一键复制)",
+        "BottomActionBar(成功→返回 /tabs/apps?mode=installed；失败→返回 subpages.appInstallForm)"
+      ]
+    },
+    "installedDetail": {
+      "route": "/tabs/apps/installed/:instanceId",
+      "sections": [
+        "StatusSummaryCard(实例名、状态、当前版本、端口、安装路径)",
+        "ReadOnlyParamsCard(已配置参数只读视图，密码脱敏)",
+        "LifecycleActionGrid(启动/停止、重启、升级->upgradeSheet->subpages.taskProgressLog、卸载->uninstallDangerModal)"
+      ]
+    }
+  },
+  "stateVariants": {
+    "upgradeSheet": {
+      "id": "sheet-app-upgrade",
+      "type": "BottomSheet",
+      "title": "升级应用",
+      "elements": ["CurrentToTargetVersionPicker", "WarningNote(升级期间服务将短暂重启)", "Cancel + ConfirmUpgrade(-> taskProgressLog)"]
+    },
+    "uninstallDangerModal": {
+      "id": "modal-app-uninstall",
+      "type": "DangerConfirmDialog",
+      "title": "确认卸载应用？",
+      "message": "卸载将停止并移除应用实例「{{target.instanceName}}」({{target.version}})。",
+      "checkboxes": [
+        { "id": "deleteData", "label": "同时删除应用持久化数据与备份", "defaultChecked": false },
+        { "id": "deleteImage", "label": "同时删除关联容器镜像", "defaultChecked": false }
+      ],
+      "confirmLabel": "确认卸载",
+      "confirmVariant": "danger"
+    }
+  },
+  "acceptanceRefs": ["AC-05.1", "AC-05.2", "AC-08"]
+}

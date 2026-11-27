@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-cron-tasks",
+  "name": "计划任务管理页（Tab 4）",
+  "route": "/tabs/tasks",
+  "activeTab": "tasks",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": true,
+    "tabBarCount": 5,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true
+  },
+  "states": ["loading", "content", "empty", "error", "taskDetailLogsSubpage", "deleteTaskModal"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "ServerSwitchPill", "compact": true },
+      "title": "计划任务",
+      "right": [{ "type": "IconButton", "icon": "refresh-cw", "ariaLabel": "刷新任务" }]
+    },
+    "body": [
+      {
+        "type": "SearchPill",
+        "placeholder": "搜索计划任务名称"
+      },
+      {
+        "type": "FilterChipRail",
+        "items": ["全部", "已启用", "已禁用", "执行中"]
+      },
+      {
+        "type": "VerticalStack",
+        "gapToken": "spacing.3",
+        "repeat": "filteredTasks",
+        "itemComponent": {
+          "type": "CronTaskCard",
+          "radiusToken": "radius.lg",
+          "onPress": { "subpage": "taskDetailLogs", "route": "/tabs/tasks/:taskId", "params": { "taskId": "{{item.id}}" } },
+          "header": {
+            "title": "{{item.name}}",
+            "typeChip": "{{item.typeLabel}}",
+            "trailingSwitch": { "id": "toggle-enable", "bind": "item.enabled", "ariaLabel": "启用或禁用该计划任务" }
+          },
+          "metaRows": [
+            { "label": "执行周期", "value": "{{item.humanSchedule}} · {{item.cronExpr}}" },
+            { "label": "最近执行", "value": "{{item.lastRunAt}} · {{item.lastStatusLabel}}", "statusColor": true }
+          ],
+          "footerActions": [
+            { "id": "run-now", "label": "立即执行", "variant": "primary-soft", "hiddenWhen": "item.isRunning" },
+            { "id": "stop-run", "label": "停止执行", "variant": "warning-soft", "visibleWhen": "item.isRunning" },
+            { "id": "view-logs", "label": "执行日志", "variant": "secondary" },
+            { "id": "delete", "label": "删除", "variant": "danger-text", "opensModal": "modal-delete-task" }
+          ]
+        }
+      }
+    ]
+  },
+  "subpages": {
+    "taskDetailLogs": {
+      "route": "/tabs/tasks/:taskId",
+      "sections": [
+        "TaskHeaderCard(名称、类型、周期、启用开关、立即执行/停止/删除按钮)",
+        "ExecutionHistoryCard(按时间倒序列表：开始时间、耗时、成功/失败/运行中徽标，点击选中)",
+        "ExecutionLogViewer(深色等宽日志区，展示选中记录的完整输出，支持复制与运行中自动刷新)"
+      ]
+    }
+  },
+  "stateVariants": {
+    "deleteTaskModal": {
+      "id": "modal-delete-task",
+      "type": "DangerConfirmDialog",
+      "title": "确认删除计划任务？",
+      "message": "将永久删除计划任务「{{target.name}}」及其历史执行记录，操作不可恢复。",
+      "confirmLabel": "确认删除",
+      "confirmVariant": "danger"
+    }
+  },
+  "excludedFromMvp": ["新建计划任务按钮", "编辑计划任务表单"],
+  "acceptanceRefs": ["AC-06.1", "AC-08"]
+}

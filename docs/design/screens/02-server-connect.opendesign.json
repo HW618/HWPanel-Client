@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-server-connect",
+  "name": "添加 / 编辑 1Panel 面板",
+  "route": "/servers/connect",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": false,
+    "backgroundToken": "bg.heroGradient"
+  },
+  "states": ["apiKeyForm", "passwordForm", "testing", "testSuccess", "testError", "captchaModal", "mfaModal"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "BackButton", "label": "返回" },
+      "title": "添加 1Panel 面板",
+      "right": []
+    },
+    "body": [
+      {
+        "type": "SegmentedControl",
+        "id": "auth-mode-segment",
+        "trackBgToken": "bg.segmentedTrack",
+        "options": [
+          { "value": "api_key", "label": "API-Key" },
+          { "value": "password", "label": "用户名密码" }
+        ]
+      },
+      {
+        "type": "FormCard",
+        "id": "connection-base-card",
+        "radiusToken": "radius.lg",
+        "fields": [
+          { "id": "name", "label": "服务器名称", "type": "text", "required": true, "placeholder": "例如：生产主节点-华东", "maxLength": 32 },
+          { "id": "endpoint", "label": "面板地址", "type": "url", "required": true, "placeholder": "https://192.168.1.10:8443", "hint": "需包含 http:// 或 https:// 协议与端口（默认对接 1Panel v2）" },
+          { "id": "entrance", "label": "安全入口（选填）", "type": "text", "required": false, "placeholder": "若面板开启安全入口请填写路径名" }
+        ]
+      },
+      {
+        "type": "FormCard",
+        "id": "auth-credentials-card",
+        "radiusToken": "radius.lg",
+        "conditionalFields": {
+          "api_key": [
+            { "id": "apiKey", "label": "API-Key", "type": "password", "required": true, "toggleVisibility": true, "placeholder": "在 1Panel 面板设置 → API 接口中获取", "hint": "需确保面板已启用 API 接口并放行当前设备出口 IP" }
+          ],
+          "password": [
+            { "id": "username", "label": "用户名", "type": "text", "required": true, "placeholder": "1Panel 登录用户名" },
+            { "id": "password", "label": "密码", "type": "password", "required": true, "toggleVisibility": true, "placeholder": "1Panel 登录密码", "hint": "若面板启用图形验证码或 MFA 两步验证，点击测试或保存时将弹出验证步骤" }
+          ]
+        }
+      },
+      {
+        "type": "FormCard",
+        "id": "connection-options-card",
+        "radiusToken": "radius.lg",
+        "fields": [
+          {
+            "id": "allowSelfSignedCert",
+            "label": "允许自签名 HTTPS 证书",
+            "subtitle": "仅建议在内网或 VPN 环境下开启，开启将跳过 TLS 证书链校验",
+            "type": "switch",
+            "defaultValue": false,
+            "warningBannerWhenTrue": "已放行自签名证书：请确认当前网络可信以防中间人攻击"
+          },
+          {
+            "id": "setAsDefault",
+            "label": "设为默认服务器",
+            "subtitle": "开启后启动 App 将直接进入该服务器概览页",
+            "type": "switch",
+            "defaultValue": false
+          }
+        ]
+      },
+      {
+        "type": "InlineResultBanner",
+        "id": "connection-test-result",
+        "variants": {
+          "success": { "bgToken": "status.successBg", "textToken": "status.successText", "example": "连接成功 · 1Panel v2.0.8 · 主机 prod-ecs-01" },
+          "error": { "bgToken": "status.dangerBg", "textToken": "status.dangerText", "example": "连接失败：API-Key 鉴权被拒绝（请检查面板 IP 白名单与本机时间同步）" }
+        }
+      },
+      {
+        "type": "ActionRow",
+        "buttons": [
+          { "id": "btn-test", "label": "测试连接", "variant": "secondary" },
+          { "id": "btn-save", "label": "保存并连接", "variant": "primary" }
+        ]
+      },
+      {
+        "type": "SecurityFootnote",
+        "icon": "shield-check",
+        "text": "所有 API-Key、密码与会话凭据均通过系统 Keychain / Keystore 加密保存在本机，直连您的 1Panel 服务器，无第三方中转。"
+      }
+    ]
+  },
+  "stateVariants": {
+    "captchaModal": {
+      "id": "modal-captcha",
+      "type": "CenterDialog",
+      "title": "输入图形验证码",
+      "elements": ["CaptchaImage(tappable to refresh)", "TextInput(4-6 chars)", "Cancel + Confirm"]
+    },
+    "mfaModal": {
+      "id": "modal-mfa",
+      "type": "CenterDialog",
+      "title": "两步验证（MFA）",
+      "description": "该 1Panel 实例已开启 MFA，请输入身份验证器中的 6 位动态码",
+      "elements": ["OtpInput(length=6, numeric, mono)", "Cancel + Verify"]
+    }
+  },
+  "acceptanceRefs": ["AC-02.1", "AC-02.2", "AC-02.3"]
+}

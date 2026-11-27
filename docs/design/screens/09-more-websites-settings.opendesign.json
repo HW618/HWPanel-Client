@@ -1,0 +1,126 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-more-websites-settings",
+  "name": "更多、网站只读管理与设置（Tab 5）",
+  "route": "/tabs/more",
+  "activeTab": "more",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": true,
+    "tabBarCount": 5,
+    "backgroundToken": "bg.heroGradient"
+  },
+  "states": ["moreHome", "websitesListReadOnly", "websiteDetailReadOnly", "themePickerSheet", "pollingIntervalSheet"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "title": "更多",
+      "right": []
+    },
+    "body": [
+      {
+        "type": "CurrentServerProfileCard",
+        "radiusToken": "radius.lg",
+        "elements": [
+          "ServerGlyph + CurrentServerName + OnlineChip",
+          "EndpointMono + PanelVersion",
+          "ActionRow: 管理全部面板 -> screen-servers-overview | 添加新面板 -> screen-server-connect"
+        ]
+      },
+      {
+        "type": "GroupedListCard",
+        "sectionTitle": "运维模块",
+        "items": [
+          {
+            "id": "entry-websites",
+            "icon": "globe",
+            "title": "网站管理",
+            "subtitle": "查看网站运行状态与 SSL 证书到期（一期只读）",
+            "trailingBadge": "{{counts.websites}} 站点 · {{counts.sslExpiring}} 证书预警",
+            "onPress": { "subpage": "websitesListReadOnly", "route": "/tabs/more/websites" }
+          }
+        ]
+      },
+      {
+        "type": "GroupedListCard",
+        "sectionTitle": "外观与刷新",
+        "items": [
+          {
+            "id": "setting-theme",
+            "icon": "sun-moon",
+            "title": "外观模式",
+            "trailingValue": "跟随系统 / 浅色 / 深色",
+            "opensSheet": "sheet-theme-picker"
+          },
+          {
+            "id": "setting-polling",
+            "icon": "activity",
+            "title": "概览刷新频率",
+            "trailingValue": "5 秒（默认）",
+            "opensSheet": "sheet-polling-interval"
+          }
+        ]
+      },
+      {
+        "type": "GroupedListCard",
+        "sectionTitle": "安全与关于",
+        "items": [
+          {
+            "id": "info-storage",
+            "icon": "shield-check",
+            "title": "本地凭据加密存储",
+            "subtitle": "iOS Keychain / Android Keystore 直连架构",
+            "readOnly": true
+          },
+          {
+            "id": "info-version",
+            "icon": "info",
+            "title": "关于 HWPanel",
+            "trailingValue": "v1.0.0 (MVP)"
+          }
+        ]
+      }
+    ]
+  },
+  "subpages": {
+    "websitesListReadOnly": {
+      "route": "/tabs/more/websites",
+      "readOnly": true,
+      "sections": [
+        "InfoNoticeBanner(当前版本支持网站运行状态与 SSL 证书巡检，配置与建站功能将于二期提供)",
+        "SearchPill(按域名或备注名搜索)",
+        "FilterChipRail(全部 / 运行中 / 已停止 / 证书预警)",
+        "VerticalStack of WebsiteReadOnlyCard(主域名、运行状态徽标、类型/运行环境、SSL 剩余天数徽标：>30天绿 / 1-30天黄 / 已过期红 / 未启用灰；onPress -> subpages.websiteDetailReadOnly /tabs/more/websites/:siteId)"
+      ],
+      "excludedFromMvp": ["新建网站按钮", "启停切换", "编辑配置", "删除网站", "证书续签按钮"]
+    },
+    "websiteDetailReadOnly": {
+      "route": "/tabs/more/websites/:siteId",
+      "readOnly": true,
+      "sections": [
+        "SiteStatusCard(主域名、运行状态、网站类型、运行环境)",
+        "KeyValueCard(绑定域名列表、监听端口、代理目标或站点根目录)",
+        "SslCertificateCard(HTTPS 状态、颁发机构、生效日期、到期时间、剩余天数状态条)",
+        "ReadOnlyFootnote(如需修改站点配置或续签证书，请前往 1Panel Web 端操作)"
+      ]
+    }
+  },
+  "stateVariants": {
+    "themePickerSheet": {
+      "id": "sheet-theme-picker",
+      "type": "BottomSheet",
+      "title": "外观模式",
+      "options": ["跟随系统（默认）", "浅色模式", "深色模式"]
+    },
+    "pollingIntervalSheet": {
+      "id": "sheet-polling-interval",
+      "type": "BottomSheet",
+      "title": "概览刷新频率",
+      "options": ["每 3 秒", "每 5 秒（推荐）", "每 10 秒", "仅手动刷新"]
+    }
+  },
+  "excludedFromMvp": ["App 生物识别锁开关", "AI 助手设置", "导航栏自定义排序", "文件/终端入口"],
+  "acceptanceRefs": ["AC-07.1", "AC-07.2", "AC-08"]
+}

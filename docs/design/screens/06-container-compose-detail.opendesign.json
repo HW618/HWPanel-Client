@@ -1,0 +1,96 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-container-compose-detail",
+  "name": "容器详情 / Compose 编排详情与日志页",
+  "route": "/tabs/containers/:kind/:id",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": false,
+    "backgroundToken": "bg.heroGradient"
+  },
+  "states": ["containerInfo", "containerLogs", "composeServices", "composeYamlRead", "composeYamlEdit", "composeYamlError", "composeLogs"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "BackButton", "label": "返回" },
+      "title": "{{entity.name}}",
+      "right": [{ "type": "StatusChip", "bind": "entity.status" }]
+    },
+    "body": [
+      {
+        "type": "OperationBarCard",
+        "id": "entity-action-bar",
+        "containerActions": [
+          { "id": "start", "label": "启动", "disabledWhen": "entity.status == 'running'" },
+          { "id": "stop", "label": "停止", "variant": "primary", "disabledWhen": "entity.status != 'running'" },
+          { "id": "restart", "label": "重启", "variant": "secondary" },
+          { "id": "delete", "label": "删除", "variant": "danger", "opensModal": "modal-delete-container" }
+        ],
+        "composeActions": [
+          { "id": "start", "label": "启动" },
+          { "id": "stop", "label": "停止" },
+          { "id": "restart", "label": "重启" },
+          { "id": "rebuild", "label": "重建", "opensModal": "modal-rebuild-compose" },
+          { "id": "delete", "label": "删除", "variant": "danger", "opensModal": "modal-delete-compose" }
+        ]
+      },
+      {
+        "type": "SegmentedControl",
+        "tabsByKind": {
+          "container": ["概览信息", "运行日志"],
+          "compose": ["服务列表", "YAML 配置", "编排日志"]
+        }
+      },
+      {
+        "type": "TabPanels",
+        "panels": {
+          "containerInfo": [
+            "KeyValueCard(基础信息: 容器ID、镜像、创建时间、重启策略)",
+            "KeyValueCard(端口映射与网络: 宿主机端口→容器端口、网络模式与IP)",
+            "KeyValueCard(挂载卷: 宿主机路径→容器路径、读写模式)",
+            "EnvVarCard(环境变量列表，含敏感项默认掩码+点击显隐)"
+          ],
+          "composeServices": [
+            "VerticalStack of ChildContainerRow(点击跳转容器详情)"
+          ],
+          "composeYaml": {
+            "toolbar": [
+              { "label": "编辑 / 取消", "toggleEdit": true },
+              { "label": "语法校验", "action": "validateYaml" },
+              { "label": "保存", "visibleWhen": "isEditing", "variant": "primary" }
+            ],
+            "editor": {
+              "type": "MonospaceCodeEditor",
+              "bgToken": "bg.codeBlock",
+              "textToken": "text.code",
+              "showLineNumbers": true,
+              "validationRules": ["nonEmpty", "noTabIndentWarning", "validYamlSyntax"],
+              "errorBannerSlot": "InlineYamlError(行号 + 原因说明)",
+              "postSaveSheet": "保存成功：可选择「仅保存」或「立即重建使配置生效（触发重建二次确认）」"
+            }
+          },
+          "logsViewer": {
+            "toolbar": [
+              { "type": "SearchInput", "placeholder": "搜索日志关键词" },
+              { "type": "LineCountChip", "options": [100, 200, 500, 1000], "default": 200 },
+              { "type": "ToggleChip", "label": "实时追踪" },
+              { "type": "IconButton", "icon": "copy", "ariaLabel": "复制可见日志" }
+            ],
+            "viewport": {
+              "type": "LogStreamBox",
+              "bgToken": "bg.codeBlock",
+              "textToken": "text.code",
+              "fontFamily": "mono",
+              "autoScrollToBottom": true,
+              "maxRenderLines": 1000
+            }
+          }
+        }
+      }
+    ]
+  },
+  "excludedFromMvp": ["容器 Web 终端按钮"],
+  "acceptanceRefs": ["AC-04.2", "AC-04.3"]
+}

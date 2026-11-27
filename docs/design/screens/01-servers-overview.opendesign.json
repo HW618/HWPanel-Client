@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-servers-overview",
+  "name": "全部面板总览",
+  "route": "/servers",
+  "entryCondition": "本地无服务器，或未设置默认服务器时启动进入；或从单机顶部切换胶囊选择「查看全部面板」进入",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": false,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true
+  },
+  "states": ["loading", "content", "empty", "error", "deleteConfirmModal"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "height": 56,
+      "left": {
+        "type": "BrandMark",
+        "title": "HWPanel",
+        "subtitle": "全部面板"
+      },
+      "right": [
+        {
+          "type": "IconButton",
+          "id": "btn-theme-toggle",
+          "icon": "sun-moon",
+          "ariaLabel": "切换浅色/深色模式",
+          "minTouchTarget": 44
+        },
+        {
+          "type": "IconButton",
+          "id": "btn-add-server",
+          "icon": "plus",
+          "variant": "soft",
+          "ariaLabel": "添加 1Panel 面板",
+          "action": { "navigate": "screen-server-connect", "mode": "create" }
+        }
+      ]
+    },
+    "body": [
+      {
+        "type": "SearchPill",
+        "id": "search-servers",
+        "placeholder": "搜索服务器备注名或地址",
+        "tokenBg": "bg.surface",
+        "radiusToken": "radius.pill"
+      },
+      {
+        "type": "SummaryStrip",
+        "id": "servers-summary",
+        "items": [
+          { "label": "全部面板", "bind": "servers.length" },
+          { "label": "在线", "bind": "onlineCount", "colorToken": "status.successText" },
+          { "label": "离线", "bind": "offlineCount", "colorToken": "text.muted" }
+        ]
+      },
+      {
+        "type": "VerticalStack",
+        "gapToken": "spacing.3",
+        "repeat": "filteredServers",
+        "itemComponent": {
+          "type": "ServerOverviewCard",
+          "radiusToken": "radius.lg",
+          "bgToken": "bg.surface",
+          "offlineBgToken": "bg.surfaceMuted",
+          "paddingToken": "spacing.4",
+          "onPress": { "navigate": "screen-dashboard", "params": { "serverId": "{{item.id}}" } },
+          "slots": {
+            "header": {
+              "glyph": { "size": 46, "radius": 14, "onlineGradient": ["#5E90FF", "#2F6BFF"] },
+              "title": "{{item.name}}",
+              "subtitleMono": "{{item.endpoint}}",
+              "trailingMenu": {
+                "type": "OverflowMenu",
+                "items": [
+                  { "id": "set-default", "label": "设为默认服务器 / 取消默认" },
+                  { "id": "test-conn", "label": "测试连接" },
+                  { "id": "edit", "label": "编辑连接", "navigate": "screen-server-connect" },
+                  { "id": "delete", "label": "移除服务器", "danger": true, "opensModal": "modal-delete-server" }
+                ]
+              }
+            },
+            "badges": [
+              { "type": "StatusChip", "bind": "item.status", "values": { "online": "在线", "offline": "无法连接" } },
+              { "type": "Chip", "visibleWhen": "item.isDefault", "label": "默认服务器", "variant": "blue" },
+              { "type": "Chip", "label": "{{item.panelVersion}}", "variant": "neutral" },
+              { "type": "Chip", "label": "{{item.authTypeLabel}}", "variant": "neutral" }
+            ],
+            "metricsGrid": {
+              "columns": 2,
+              "visibleWhen": "item.status == 'online'",
+              "items": [
+                { "label": "CPU", "value": "{{item.cpuPercent}}%", "component": "MiniProgressBar" },
+                { "label": "内存", "value": "{{item.memPercent}}%", "component": "MiniProgressBar" }
+              ]
+            },
+            "footer": {
+              "onlineText": "运行时长 {{item.uptime}} · 容器 {{item.runningContainers}}/{{item.totalContainers}}",
+              "offlineText": "最后在线 {{item.lastSeenAt}} · {{item.lastErrorShort}}"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "stateVariants": {
+    "empty": {
+      "component": "EmptyStateCard",
+      "icon": "server",
+      "title": "尚未添加 1Panel 服务器",
+      "description": "支持通过 API-Key 或用户名密码连接多台 1Panel v2 面板，凭据仅安全保存在本机钥匙串。",
+      "primaryAction": { "label": "添加第一台面板", "navigate": "screen-server-connect" }
+    },
+    "deleteConfirmModal": {
+      "id": "modal-delete-server",
+      "type": "DangerConfirmDialog",
+      "title": "移除服务器连接？",
+      "message": "将从本机移除「{{target.name}}」({{target.endpoint}}) 的连接配置与本地凭据，不会影响远端 1Panel 服务器运行。",
+      "cancelLabel": "取消",
+      "confirmLabel": "确认移除",
+      "confirmVariant": "danger"
+    }
+  },
+  "acceptanceRefs": ["AC-01.1", "AC-01.2", "AC-01.3"]
+}

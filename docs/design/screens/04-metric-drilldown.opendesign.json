@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "opendesign/1.0",
+  "id": "screen-metric-drilldown",
+  "name": "监控指标下钻详情页",
+  "route": "/tabs/overview/metrics/:tab",
+  "viewport": { "width": 390, "height": 844 },
+  "tokensRef": "../tokens.json",
+  "themeSupport": ["light", "dark"],
+  "shell": {
+    "hasBottomTabBar": false,
+    "backgroundToken": "bg.heroGradient",
+    "pullToRefresh": true
+  },
+  "states": ["cpuTab", "memoryTab", "diskTab", "networkTab", "processesTab", "historyDisabledEmpty"],
+  "layout": {
+    "topBar": {
+      "type": "TopBar",
+      "left": { "type": "BackButton", "label": "概览" },
+      "title": "资源监控详情",
+      "right": [{ "type": "IconButton", "icon": "refresh-cw", "ariaLabel": "刷新" }]
+    },
+    "body": [
+      {
+        "type": "HorizontalPillTabs",
+        "id": "metric-dimension-tabs",
+        "options": [
+          { "value": "cpu", "label": "CPU" },
+          { "value": "memory", "label": "内存" },
+          { "value": "disk", "label": "磁盘" },
+          { "value": "network", "label": "网络" },
+          { "value": "processes", "label": "进程" }
+        ]
+      },
+      {
+        "type": "Card",
+        "id": "trend-chart-card",
+        "visibleWhen": "tab != 'processes'",
+        "header": {
+          "title": "历史趋势",
+          "right": {
+            "type": "RangeChips",
+            "options": ["1小时", "6小时", "24小时"]
+          }
+        },
+        "chart": {
+          "type": "AreaLineChart",
+          "height": 180,
+          "interactiveTooltip": true,
+          "emptyHistoryFallback": {
+            "icon": "activity",
+            "title": "暂无监控历史数据",
+            "description": "当前 1Panel 面板尚未开启系统监控历史记录，请前往 1Panel Web 端开启监控配置；上方实时指标不受影响。"
+          }
+        }
+      },
+      {
+        "type": "ConditionalDetailSection",
+        "branches": {
+          "cpu": {
+            "cards": [
+              "CpuSummaryCard(型号、物理/逻辑核心数、Load 1/5/15)",
+              "PerCoreLoadGrid(每核心独立进度条与百分比)"
+            ]
+          },
+          "memory": {
+            "cards": [
+              "MemoryBreakdownCard(总内存、已用、可用、缓存/缓冲区)",
+              "SwapUsageCard(总容量、已用、占比进度条)"
+            ]
+          },
+          "disk": {
+            "cards": [
+              "DiskIoLiveCard(实时读/写速率、IOPS 摘要)",
+              "MountPointListCard(全部挂载点路径、文件系统、已用/总容量、阈值着色进度条)"
+            ]
+          },
+          "network": {
+            "cards": [
+              "InterfaceSelectorCard(选择全部网卡或指定 eth0/ens*/docker0)",
+              "TrafficStatsCard(实时上行/下行速率、累计发送/接收总量、丢包/错误计数)"
+            ]
+          },
+          "processes": {
+            "readOnly": true,
+            "forbidKillAction": true,
+            "cards": [
+              "ProcessSearchAndSortBar(搜索进程名/PID + 排序: CPU / 内存)",
+              "ReadOnlyNoticeStrip(当前版本进程列表为只读模式，不支持远程结束进程)",
+              "ProcessTableCard(必填列: 进程名、PID、CPU%、内存MB/占比；可选扩展列: 用户[若 1Panel 接口返回])"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "acceptanceRefs": ["AC-03.2", "AC-03.3"]
+}

@@ -1,0 +1,1444 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HWPanel · OpenDesign MVP 高保真交互原型</title>
+  <style>
+    :root, [data-theme="light"] {
+      --stage-bg: #e7ebf2;
+      --bg: #f2f3f6;
+      --hero-grad: linear-gradient(180deg, #dde4f5 0%, #edf0f7 160px, #f2f3f6 340px);
+      --surface: #ffffff;
+      --surface-soft: #f5f6f9;
+      --surface-muted: #f8f9fb;
+      --seg-track: #e9edf4;
+      --tab-glass: rgba(255, 255, 255, 0.88);
+      --pill-glass: rgba(255, 255, 255, 0.78);
+      --code-bg: #0f1420;
+      --code-fg: #e5ecff;
+      --overlay: rgba(15, 23, 42, 0.44);
+      --ink: #171b26;
+      --ink-2: #343b4b;
+      --muted: #707785;
+      --subtle: #8a8f9a;
+      --line: #e9ecf2;
+      --control-border: #d9dde5;
+      --brand: #2f6bff;
+      --brand-pressed: #2057dd;
+      --brand-soft: #edf3ff;
+      --brand-on-soft: #2057dd;
+      --success: #22c55e;
+      --success-bg: #eaf9f0;
+      --success-text: #137a3c;
+      --warning: #f59e0b;
+      --warning-bg: #fff5e3;
+      --warning-text: #996008;
+      --danger: #ef4444;
+      --danger-bg: #ffeded;
+      --danger-border: #fee2e2;
+      --danger-text: #c63434;
+      --chart-track: #edf0f4;
+      --chart-cpu: #2f6bff;
+      --chart-mem: #27a4c4;
+      --chart-disk: #6366f1;
+      --shadow-card: 0 8px 24px rgba(20, 30, 60, 0.06);
+      --shadow-tab: 0 -8px 24px rgba(20, 30, 60, 0.04);
+      --sys-fg: #17181a;
+    }
+    [data-theme="dark"] {
+      --stage-bg: #080a0f;
+      --bg: #0d1017;
+      --hero-grad: linear-gradient(180deg, #15213b 0%, #101625 160px, #0d1017 340px);
+      --surface: #171c28;
+      --surface-soft: #1f2636;
+      --surface-muted: #131722;
+      --seg-track: #1c2333;
+      --tab-glass: rgba(23, 28, 40, 0.88);
+      --pill-glass: rgba(31, 38, 54, 0.82);
+      --code-bg: #090c12;
+      --code-fg: #e5ecff;
+      --overlay: rgba(0, 0, 0, 0.64);
+      --ink: #f3f6fc;
+      --ink-2: #cdd5e3;
+      --muted: #8e98ac;
+      --subtle: #657085;
+      --line: #262e40;
+      --control-border: #39445c;
+      --brand: #4d82ff;
+      --brand-pressed: #356bf0;
+      --brand-soft: rgba(77, 130, 255, 0.16);
+      --brand-on-soft: #8fb2ff;
+      --success: #34d399;
+      --success-bg: rgba(34, 197, 94, 0.16);
+      --success-text: #6ee7b7;
+      --warning: #fbbf24;
+      --warning-bg: rgba(245, 158, 11, 0.16);
+      --warning-text: #fcd34d;
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.16);
+      --danger-border: rgba(248, 113, 113, 0.30);
+      --danger-text: #fca5a5;
+      --chart-track: #262f42;
+      --chart-cpu: #4d82ff;
+      --chart-mem: #38bdf8;
+      --chart-disk: #818cf8;
+      --shadow-card: 0 6px 20px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      --shadow-tab: 0 -8px 24px rgba(0, 0, 0, 0.36);
+      --sys-fg: #f3f6fc;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Roboto", sans-serif; }
+    body {
+      background: var(--stage-bg);
+      color: var(--ink);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      padding: 24px;
+      transition: background 200ms ease;
+    }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { cursor: pointer; border: 0; background: transparent; -webkit-tap-highlight-color: transparent; transition: transform 160ms ease, background 160ms ease, opacity 160ms ease; }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    h1, h2, h3, p { margin: 0; }
+    .mono { font-family: "SFMono-Regular", "JetBrains Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+    .tnum { font-variant-numeric: tabular-nums; }
+
+    /* Side Inspector */
+    .inspector {
+      width: 244px;
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--surface);
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .inspector-brand { display: flex; align-items: center; gap: 10px; }
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: linear-gradient(145deg, #5e90ff, #173b99);
+      display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 14px;
+      box-shadow: 0 6px 16px rgba(47, 107, 255, 0.28);
+    }
+    .inspector h2 { font-size: 15px; font-weight: 700; }
+    .inspector .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .theme-pills { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border-radius: 12px; background: var(--seg-track); }
+    .theme-pills button { min-height: 32px; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--muted); }
+    .theme-pills button.active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .nav-list { display: flex; flex-direction: column; gap: 6px; }
+    .nav-list button {
+      text-align: left; padding: 9px 11px; border-radius: 11px; font-size: 12px; font-weight: 500;
+      color: var(--ink-2); background: var(--surface-soft); display: flex; justify-content: space-between; align-items: center;
+    }
+    .nav-list button.active { background: var(--brand); color: #fff; font-weight: 600; }
+    .nav-list button span.tag { font-size: 10px; opacity: 0.78; }
+    .inspector-note { font-size: 11px; line-height: 1.55; color: var(--muted); padding-top: 6px; border-top: 1px solid var(--line); }
+
+    /* Phone Shell 390x844 */
+    .phone-frame {
+      position: relative; width: 410px; height: 864px; padding: 10px; border-radius: 52px;
+      background: linear-gradient(160deg, #3a3a3d 0%, #1b1b1f 52%, #09090b 100%);
+      box-shadow: 0 34px 70px -20px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.14);
+      flex: none;
+    }
+    .phone-screen {
+      position: relative; width: 390px; height: 844px; border-radius: 42px; overflow: hidden;
+      background: var(--bg); display: flex; flex-direction: column;
+    }
+    .dynamic-island {
+      position: absolute; z-index: 40; top: 11px; left: 50%; width: 114px; height: 32px;
+      transform: translateX(-50%); border-radius: 999px; background: #000; pointer-events: none;
+    }
+    .status-bar {
+      position: absolute; z-index: 35; top: 0; left: 0; right: 0; height: 50px;
+      padding: 16px 26px 0; display: flex; justify-content: space-between; align-items: flex-start;
+      font-size: 14px; font-weight: 650; color: var(--sys-fg); pointer-events: none;
+    }
+    .home-indicator {
+      position: absolute; z-index: 60; left: 50%; bottom: 7px; width: 132px; height: 5px;
+      transform: translateX(-50%); border-radius: 999px; background: var(--sys-fg); opacity: 0.75; pointer-events: none;
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute; inset: 0; display: none; flex-direction: column;
+      padding-top: 50px; background: var(--hero-grad);
+    }
+    .screen.active { display: flex; animation: fadeIn 180ms ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      min-height: 54px; padding: 4px 16px; flex: none;
+    }
+    .topbar-title { font-size: 17px; font-weight: 650; flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+      background: var(--pill-glass); color: var(--ink-2); flex: none;
+    }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 0 8px 0 2px;
+      font-size: 14px; font-weight: 600; color: var(--brand); flex: none;
+    }
+    .server-pill {
+      display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 13px;
+      border-radius: 999px; background: var(--pill-glass); max-width: 220px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+    .server-pill strong { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .scroll {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 28px;
+      display: flex; flex-direction: column; gap: 12px; scrollbar-width: none;
+    }
+    .scroll::-webkit-scrollbar { display: none; }
+    .has-tabs .scroll { padding-bottom: 102px; }
+
+    /* Bottom 5 Tab Bar */
+    .tab-bar {
+      position: absolute; left: 8px; right: 8px; bottom: 0; z-index: 30;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      padding: 6px 4px 22px; border-radius: 20px 20px 0 0;
+      background: var(--tab-glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-tab);
+    }
+    .tab-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      min-height: 50px; color: var(--muted); font-size: 10px; font-weight: 500;
+    }
+    .tab-item .dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; margin-top: 1px; }
+    .tab-item.active { color: var(--brand); font-weight: 650; }
+    .tab-item.active .dot { background: var(--brand); }
+
+    /* Shared UI */
+    .card {
+      background: var(--surface); border-radius: 22px; padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .card-click { text-align: left; width: 100%; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+    .card-title { font-size: 16px; font-weight: 650; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .dot-status { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+    .dot-status.online { background: var(--success); box-shadow: 0 0 0 3px rgba(34,197,94,0.16); }
+    .dot-status.warning { background: var(--warning); }
+    .dot-status.danger { background: var(--danger); }
+    .dot-status.offline { background: var(--subtle); }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 7px;
+      font-size: 11px; font-weight: 600; background: var(--surface-soft); color: var(--muted); white-space: nowrap;
+    }
+    .chip.success { background: var(--success-bg); color: var(--success-text); }
+    .chip.warning { background: var(--warning-bg); color: var(--warning-text); }
+    .chip.danger { background: var(--danger-bg); color: var(--danger-text); }
+    .chip.blue { background: var(--brand-soft); color: var(--brand-on-soft); }
+
+    .search-pill {
+      display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px;
+      border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-card);
+    }
+    .search-pill input { width: 100%; border: 0; outline: none; background: transparent; font-size: 14px; }
+    .search-pill input::placeholder { color: var(--subtle); }
+
+    .segmented {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+      border-radius: 14px; background: var(--seg-track);
+    }
+    .segmented.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .segmented button {
+      min-height: 36px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted);
+    }
+    .segmented button.active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+    .pill-rail { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+    .pill-rail::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+      background: var(--surface); color: var(--muted); box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .filter-pill.active { background: var(--brand); color: #fff; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 40px; padding: 0 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    }
+    .btn.sm { min-height: 32px; padding: 0 10px; border-radius: 9px; font-size: 12px; }
+    .btn.primary { background: var(--brand); color: #fff; }
+    .btn.soft { background: var(--brand-soft); color: var(--brand-on-soft); }
+    .btn.secondary { background: var(--surface-soft); color: var(--ink-2); border: 1px solid var(--line); }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn.danger-soft { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+    .btn.warning-soft { background: var(--warning-bg); color: var(--warning-text); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* Rings */
+    .rings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .ring-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 4px 0; }
+    .ring-wrap { position: relative; width: 84px; height: 84px; }
+    .ring-wrap svg { width: 84px; height: 84px; transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: var(--chart-track); stroke-width: 6; }
+    .ring-val { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 400ms ease; }
+    .ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+    .ring-num { font-size: 18px; font-weight: 700; letter-spacing: -0.03em; }
+    .ring-sub { font-size: 10px; color: var(--muted); }
+    .mini-box-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .mini-box { background: var(--surface-soft); border-radius: 12px; padding: 10px 12px; }
+    .mini-box .k { font-size: 11px; color: var(--muted); }
+    .mini-box .v { font-size: 13px; font-weight: 650; margin-top: 4px; }
+
+    /* Progress bar */
+    .bar-track { height: 6px; border-radius: 99px; background: var(--chart-track); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: var(--brand); }
+
+    /* Form */
+    .field { padding: 12px 0; }
+    .field + .field { border-top: 1px solid var(--line); }
+    .field label { display: block; font-size: 12px; font-weight: 650; color: var(--ink-2); margin-bottom: 6px; }
+    .field input { width: 100%; height: 34px; border: 0; outline: none; background: transparent; font-size: 14px; }
+    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+    .switch {
+      width: 44px; height: 26px; border-radius: 99px; background: var(--control-border);
+      position: relative; flex: none;
+    }
+    .switch::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+      border-radius: 50%; background: #fff; transition: transform 160ms ease;
+    }
+    .switch.on { background: var(--brand); }
+    .switch.on::after { transform: translateX(18px); }
+
+    /* Code & Log */
+    .code-box {
+      background: var(--code-bg); color: var(--code-fg); border-radius: 14px; padding: 12px;
+      font-size: 11.5px; line-height: 1.65; overflow-x: auto; white-space: pre;
+    }
+    textarea.yaml-editor {
+      width: 100%; min-height: 220px; border: 1px solid var(--line); border-radius: 14px;
+      background: var(--code-bg); color: var(--code-fg); padding: 12px; resize: vertical;
+      font-size: 11.5px; line-height: 1.6; outline: none;
+    }
+
+    /* Notice Banner */
+    .notice {
+      padding: 10px 12px; border-radius: 12px; font-size: 12px; line-height: 1.5;
+      background: var(--brand-soft); color: var(--brand-on-soft);
+    }
+    .notice.success { background: var(--success-bg); color: var(--success-text); }
+    .notice.warning { background: var(--warning-bg); color: var(--warning-text); }
+    .notice.danger { background: var(--danger-bg); color: var(--danger-text); }
+
+    /* List Row */
+    .list-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 12px 0; border-top: 1px solid var(--line);
+    }
+    .list-row:first-child { border-top: 0; padding-top: 2px; }
+    .list-row:last-child { padding-bottom: 2px; }
+
+    /* Modals & Sheets */
+    .backdrop {
+      position: absolute; inset: 0; z-index: 80; background: var(--overlay);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .backdrop.open { display: flex; }
+    .backdrop.sheet-mode { align-items: flex-end; padding: 0; }
+    .dialog {
+      width: 100%; background: var(--surface); border-radius: 26px; padding: 20px;
+      box-shadow: 0 20px 44px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 14px;
+    }
+    .sheet {
+      width: 100%; background: var(--surface); border-radius: 26px 26px 0 0; padding: 14px 18px 30px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .sheet-handle { width: 38px; height: 4px; border-radius: 99px; background: var(--control-border); margin: 0 auto 4px; }
+    .check-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
+      background: var(--surface-soft); font-size: 13px; color: var(--ink-2);
+    }
+    .check-item input { width: 16px; height: 16px; accent-color: var(--danger); }
+
+    /* Toast */
+    .toast {
+      position: absolute; z-index: 95; top: 62px; left: 50%; transform: translateX(-50%) translateY(-12px);
+      background: var(--ink); color: var(--surface); padding: 9px 15px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 200ms ease;
+      white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 760px) {
+      .inspector { display: none; }
+      body { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Desktop Prototype Switcher -->
+  <aside class="inspector">
+    <div class="inspector-brand">
+      <div class="brand-logo">HW</div>
+      <div>
+        <h2>HWPanel MVP</h2>
+        <div class="sub">1Panel v2 · 5 Tab · fnOS 风格</div>
+      </div>
+    </div>
+    <div class="theme-pills">
+      <button id="btnLight" class="active" onclick="setTheme('light')">浅色模式</button>
+      <button id="btnDark" onclick="setTheme('dark')">深色模式</button>
+    </div>
+    <div class="nav-list" id="quickNav"></div>
+    <div class="inspector-note">
+      严格对齐 <strong>docs/prd.md</strong> MVP 范围：<br/>
+      · 底部固定 5 Tab（概览/容器/应用/任务/更多）<br/>
+      · API-Key &amp; 用户名密码登录<br/>
+      · 高危操作强提示二次确认<br/>
+      · 网站与进程列表一期纯只读
+    </div>
+  </aside>
+
+  <!-- Phone Frame -->
+  <main class="phone-frame">
+    <div class="phone-screen">
+      <div class="dynamic-island"></div>
+      <div class="status-bar">
+        <span>9:41</span>
+        <span>5G · 92%</span>
+      </div>
+
+      <!-- 01: 全部面板总览 -->
+      <section class="screen" id="scr-servers">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="brand-logo" style="width:32px;height:32px;border-radius:10px;font-size:12px;">HW</div>
+            <div>
+              <div style="font-size:17px;font-weight:700;">全部面板</div>
+              <div class="muted" style="font-size:11px;">1Panel v2 多实例总览</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="icon-btn" onclick="toggleTheme()" title="切换主题">◐</button>
+            <button class="icon-btn" onclick="go('scr-connect')" title="添加面板" style="background:var(--brand);color:#fff;font-size:20px;">+</button>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="search-pill">
+            <span class="muted">⌕</span>
+            <input id="serverSearch" placeholder="搜索服务器备注名或地址" oninput="renderServers()" />
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;padding:0 4px;" id="serverSummary"></div>
+          <div id="serverList" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+      </section>
+
+      <!-- 02: 添加面板 -->
+      <section class="screen" id="scr-connect">
+        <div class="topbar">
+          <button class="back-btn" onclick="go('scr-servers')">‹ 返回</button>
+          <div class="topbar-title">添加 1Panel 面板</div>
+          <div style="width:48px;"></div>
+        </div>
+        <div class="scroll">
+          <div class="segmented">
+            <button id="authApiBtn" class="active" onclick="setAuthMode('api_key')">API-Key</button>
+            <button id="authPwdBtn" onclick="setAuthMode('password')">用户名密码</button>
+          </div>
+          <div class="card">
+            <div class="field"><label>服务器名称 *</label><input id="fName" value="香港边缘节点-02" /></div>
+            <div class="field"><label>面板地址 *</label><input id="fUrl" class="mono" value="https://hk-edge.example.com:8443" /></div>
+            <div class="field"><label>安全入口（选填）</label><input id="fEntrance" placeholder="若面板开启安全入口请填写路径名" /></div>
+          </div>
+          <div class="card" id="authApiFields">
+            <div class="field"><label>API-Key *</label><input id="fApiKey" type="password" value="1p_demo_key_9f8a7c6b" /></div>
+            <div class="muted">请确保 1Panel 面板已开启 API 接口并放行当前出口 IP。</div>
+          </div>
+          <div class="card" id="authPwdFields" style="display:none;">
+            <div class="field"><label>用户名 *</label><input id="fUser" value="admin" /></div>
+            <div class="field"><label>密码 *</label><input id="fPass" type="password" value="••••••••••" /></div>
+            <div class="muted">若目标面板启用图形验证码或 MFA 两步验证，将弹出验证步骤。</div>
+          </div>
+          <div class="card">
+            <div class="switch-row">
+              <div>
+                <div style="font-size:14px;font-weight:600;">允许自签名 HTTPS 证书</div>
+                <div class="muted">仅建议在内网或 VPN 环境下开启</div>
+              </div>
+              <button class="switch" id="swSelfSigned" onclick="toggleSelfSigned()"></button>
+            </div>
+            <div id="selfSignedWarn" class="notice warning" style="display:none;margin-top:8px;">已放行自签名证书：请确认当前网络可信。</div>
+            <div class="switch-row" style="border-top:1px solid var(--line);margin-top:6px;padding-top:12px;">
+              <div>
+                <div style="font-size:14px;font-weight:600;">设为默认服务器</div>
+                <div class="muted">启动 App 时直接进入该机概览页</div>
+              </div>
+              <button class="switch on" id="swDefault" onclick="this.classList.toggle('on')"></button>
+            </div>
+          </div>
+          <div id="connResult" style="display:none;"></div>
+          <div class="btn-row">
+            <button class="btn secondary" style="flex:1;" onclick="testConnection()">测试连接</button>
+            <button class="btn primary" style="flex:1.2;" onclick="saveServer()">保存并连接</button>
+          </div>
+          <div class="muted" style="text-align:center;line-height:1.5;padding:0 8px;">
+            凭据仅加密存储在 iOS Keychain / Android Keystore，直连您的 1Panel v2 面板。
+          </div>
+        </div>
+      </section>
+
+      <!-- 03: Tab 1 单机概览 -->
+      <section class="screen active has-tabs" id="scr-overview">
+        <div class="topbar">
+          <button class="server-pill" onclick="openServerSheet()">
+            <span class="dot-status online"></span>
+            <strong id="curServerLabel">生产主节点-华东</strong>
+            <span class="muted">▾</span>
+          </button>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip blue" id="pollBadge">5s 实时</span>
+            <button class="icon-btn" onclick="toast('已刷新最新监控数据')">↻</button>
+          </div>
+        </div>
+        <div class="scroll">
+          <div style="padding:2px 4px;">
+            <h1 style="font-size:24px;font-weight:750;letter-spacing:-0.03em;" id="dashHostname">prod-ecs-hz-01</h1>
+            <p class="muted" style="margin-top:3px;" id="dashMeta">Ubuntu 24.04 LTS · 运行 48天 12小时 · 1Panel v2.0.8</p>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">核心资源</span>
+              <span class="muted">点击下钻趋势 ›</span>
+            </div>
+            <div class="rings-grid">
+              <button class="ring-btn" onclick="openDrilldown('cpu')">
+                <div class="ring-wrap">
+                  <svg viewBox="0 0 84 84"><circle class="ring-track" cx="42" cy="42" r="35"/><circle class="ring-val" cx="42" cy="42" r="35" stroke="var(--chart-cpu)" stroke-dasharray="220" stroke-dashoffset="136"/></svg>
+                  <div class="ring-center"><span class="ring-num tnum">38%</span><span class="ring-sub">8 核</span></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;">CPU</span>
+              </button>
+              <button class="ring-btn" onclick="openDrilldown('memory')">
+                <div class="ring-wrap">
+                  <svg viewBox="0 0 84 84"><circle class="ring-track" cx="42" cy="42" r="35"/><circle class="ring-val" cx="42" cy="42" r="35" stroke="var(--warning)" stroke-dasharray="220" stroke-dashoffset="57"/></svg>
+                  <div class="ring-center"><span class="ring-num tnum">74%</span><span class="ring-sub">11.8/16G</span></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;">内存</span>
+              </button>
+              <button class="ring-btn" onclick="openDrilldown('disk')">
+                <div class="ring-wrap">
+                  <svg viewBox="0 0 84 84"><circle class="ring-track" cx="42" cy="42" r="35"/><circle class="ring-val" cx="42" cy="42" r="35" stroke="var(--chart-disk)" stroke-dasharray="220" stroke-dashoffset="97"/></svg>
+                  <div class="ring-center"><span class="ring-num tnum">56%</span><span class="ring-sub">112/200G</span></div>
+                </div>
+                <span style="font-size:12px;font-weight:600;">磁盘</span>
+              </button>
+            </div>
+            <div class="mini-box-row">
+              <button class="mini-box card-click" onclick="openDrilldown('cpu')">
+                <div class="k">系统负载 (1/5/15m)</div>
+                <div class="v tnum">0.84 / 0.92 / 0.78</div>
+              </button>
+              <button class="mini-box card-click" onclick="openDrilldown('memory')">
+                <div class="k">Swap 交换分区</div>
+                <div class="v tnum">0.4 / 4.0 GB (10%)</div>
+              </button>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button class="card card-click" onclick="openDrilldown('network')">
+              <div class="card-head" style="margin-bottom:8px;">
+                <span style="font-size:14px;font-weight:650;">网络流量</span>
+                <span class="chip">eth0</span>
+              </div>
+              <div class="tnum" style="font-size:13px;font-weight:650;color:var(--brand);">↑ 1.42 MB/s</div>
+              <div class="tnum" style="font-size:13px;font-weight:650;color:var(--success-text);margin-top:4px;">↓ 4.86 MB/s</div>
+              <div class="muted tnum" style="margin-top:8px;font-size:11px;">累计 ↑128G ↓412G</div>
+            </button>
+            <button class="card card-click" onclick="openDrilldown('disk')">
+              <div class="card-head" style="margin-bottom:8px;">
+                <span style="font-size:14px;font-weight:650;">磁盘 I/O</span>
+                <span class="chip">3 挂载点</span>
+              </div>
+              <div class="tnum" style="font-size:13px;font-weight:650;">读 18.4 MB/s</div>
+              <div class="tnum" style="font-size:13px;font-weight:650;margin-top:4px;">写 6.2 MB/s</div>
+              <div class="muted" style="margin-top:8px;font-size:11px;">点击查看全部挂载点 ›</div>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">进程 Top 5</span>
+              <div class="segmented" style="width:138px;padding:3px;">
+                <button id="procCpuBtn" class="active" style="min-height:26px;font-size:11px;" onclick="setProcSort('cpu')">按 CPU</button>
+                <button id="procMemBtn" style="min-height:26px;font-size:11px;" onclick="setProcSort('mem')">按内存</button>
+              </div>
+            </div>
+            <div id="topProcList"></div>
+            <button style="width:100%;padding-top:10px;margin-top:6px;border-top:1px solid var(--line);color:var(--brand);font-size:12px;font-weight:600;" onclick="openDrilldown('processes')">
+              查看完整进程列表（只读） ›
+            </button>
+          </div>
+        </div>
+        <nav class="tab-bar" data-tabbar="overview"></nav>
+      </section>
+
+      <!-- 04: 监控指标下钻 -->
+      <section class="screen" id="scr-drilldown">
+        <div class="topbar">
+          <button class="back-btn" onclick="go('scr-overview')">‹ 概览</button>
+          <div class="topbar-title">资源监控详情</div>
+          <button class="icon-btn" onclick="toast('已刷新指标明细')">↻</button>
+        </div>
+        <div class="scroll">
+          <div class="pill-rail" id="drillTabs"></div>
+          <div class="card" id="trendCard">
+            <div class="card-head">
+              <span class="card-title" id="trendTitle">CPU 历史趋势</span>
+              <div class="btn-row" style="gap:4px;">
+                <button class="chip blue">1h</button>
+                <button class="chip">6h</button>
+                <button class="chip">24h</button>
+              </div>
+            </div>
+            <svg viewBox="0 0 320 110" style="width:100%;height:110px;display:block;">
+              <defs>
+                <linearGradient id="gArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--brand)" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="var(--brand)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,78 C32,70 48,46 80,52 C112,58 136,34 168,40 C200,46 232,26 264,34 C288,40 304,32 320,38 L320,110 L0,110 Z" fill="url(#gArea)"/>
+              <path d="M0,78 C32,70 48,46 80,52 C112,58 136,34 168,40 C200,46 232,26 264,34 C288,40 304,32 320,38" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+            <div style="display:flex;justify-content:space-between;" class="muted mono">
+              <span>08:40</span><span>09:00</span><span>09:20</span><span>09:41</span>
+            </div>
+          </div>
+          <div id="drillBody" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+      </section>
+
+      <!-- 05: Tab 2 容器与编排 -->
+      <section class="screen has-tabs" id="scr-containers">
+        <div class="topbar">
+          <button class="server-pill" onclick="openServerSheet()" style="max-width:150px;">
+            <span class="dot-status online"></span>
+            <strong class="sync-server-name">生产主节点-华东</strong>
+          </button>
+          <div class="topbar-title">容器与编排</div>
+          <button class="icon-btn" onclick="toast('已刷新容器列表')">↻</button>
+        </div>
+        <div class="scroll">
+          <div class="segmented">
+            <button id="segContBtn" class="active" onclick="setContainerTab('containers')">容器 (4)</button>
+            <button id="segCompBtn" onclick="setContainerTab('compose')">编排 (2)</button>
+          </div>
+          <div class="search-pill">
+            <span class="muted">⌕</span>
+            <input id="contSearch" placeholder="搜索容器名称或镜像" oninput="renderContainers()" />
+          </div>
+          <div class="pill-rail" id="contFilters"></div>
+          <div id="contList" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+        <nav class="tab-bar" data-tabbar="containers"></nav>
+      </section>
+
+      <!-- 06: 容器/Compose 详情与日志/YAML -->
+      <section class="screen" id="scr-cont-detail">
+        <div class="topbar">
+          <button class="back-btn" onclick="go('scr-containers')">‹ 返回</button>
+          <div class="topbar-title" id="detailTitle">openresty-prod</div>
+          <span class="chip success" id="detailStatusChip">运行中</span>
+        </div>
+        <div class="scroll" id="contDetailScroll"></div>
+      </section>
+
+      <!-- 07: Tab 3 应用商店与已安装 -->
+      <section class="screen has-tabs" id="scr-apps">
+        <div class="topbar">
+          <button class="server-pill" onclick="openServerSheet()" style="max-width:150px;">
+            <span class="dot-status online"></span>
+            <strong class="sync-server-name">生产主节点-华东</strong>
+          </button>
+          <div class="topbar-title">应用商店</div>
+          <button class="icon-btn" onclick="toast('已同步最新应用目录')">↻</button>
+        </div>
+        <div class="scroll">
+          <div class="segmented">
+            <button id="segStoreBtn" class="active" onclick="setAppsTab('store')">应用商店</button>
+            <button id="segInstBtn" onclick="setAppsTab('installed')">已安装 (3 · 1可升级)</button>
+          </div>
+          <div class="search-pill">
+            <span class="muted">⌕</span>
+            <input id="appSearch" placeholder="搜索应用名称、分类或简介" oninput="renderApps()" />
+          </div>
+          <div id="appsContent" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+        <nav class="tab-bar" data-tabbar="apps"></nav>
+      </section>
+
+      <!-- 08: Tab 4 计划任务 -->
+      <section class="screen has-tabs" id="scr-tasks">
+        <div class="topbar">
+          <button class="server-pill" onclick="openServerSheet()" style="max-width:150px;">
+            <span class="dot-status online"></span>
+            <strong class="sync-server-name">生产主节点-华东</strong>
+          </button>
+          <div class="topbar-title">计划任务</div>
+          <button class="icon-btn" onclick="toast('已刷新计划任务状态')">↻</button>
+        </div>
+        <div class="scroll">
+          <div class="pill-rail">
+            <button class="filter-pill active">全部 (3)</button>
+            <button class="filter-pill">已启用</button>
+            <button class="filter-pill">已禁用</button>
+            <button class="filter-pill">执行中</button>
+          </div>
+          <div id="cronList" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+        <nav class="tab-bar" data-tabbar="tasks"></nav>
+      </section>
+
+      <!-- 09: Tab 5 更多 & 网站只读 -->
+      <section class="screen has-tabs" id="scr-more">
+        <div class="topbar">
+          <div style="width:40px;"></div>
+          <div class="topbar-title">更多</div>
+          <div style="width:40px;"></div>
+        </div>
+        <div class="scroll">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div class="brand-logo" style="width:46px;height:46px;border-radius:14px;font-size:16px;">1P</div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <strong style="font-size:16px;" class="sync-server-name">生产主节点-华东</strong>
+                  <span class="chip success">在线</span>
+                </div>
+                <div class="muted mono" style="margin-top:4px;">https://hz.example.com:8443 · v2.0.8</div>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:14px;">
+              <button class="btn soft" style="flex:1;" onclick="go('scr-servers')">管理全部面板</button>
+              <button class="btn secondary" style="flex:1;" onclick="go('scr-connect')">添加新面板</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="muted" style="font-weight:650;margin-bottom:8px;">运维模块</div>
+            <button class="list-row" style="width:100%;" onclick="go('scr-websites')">
+              <div style="text-align:left;">
+                <div style="font-size:15px;font-weight:600;">网站管理</div>
+                <div class="muted" style="margin-top:2px;">运行状态与 SSL 证书到期巡检（一期只读）</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="chip warning">1 证书临期</span>
+                <span class="muted">›</span>
+              </div>
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="muted" style="font-weight:650;margin-bottom:8px;">外观与刷新</div>
+            <div class="list-row">
+              <div>
+                <div style="font-size:15px;font-weight:600;">外观模式</div>
+                <div class="muted">支持跟随系统 / 浅色 / 深色</div>
+              </div>
+              <button class="chip blue" onclick="toggleTheme()" id="moreThemeVal">浅色模式 ▾</button>
+            </div>
+            <div class="list-row">
+              <div>
+                <div style="font-size:15px;font-weight:600;">概览刷新频率</div>
+                <div class="muted">仅在前台概览页激活轮询</div>
+              </div>
+              <button class="chip" onclick="cyclePolling()" id="morePollVal">每 5 秒 ▾</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="muted" style="font-weight:650;margin-bottom:8px;">安全与关于</div>
+            <div class="list-row">
+              <div>
+                <div style="font-size:14px;font-weight:600;">本地凭据加密存储</div>
+                <div class="muted">iOS Keychain / Android Keystore 直连</div>
+              </div>
+              <span class="chip success">已启用</span>
+            </div>
+            <div class="list-row">
+              <div style="font-size:14px;font-weight:600;">HWPanel 版本</div>
+              <span class="muted mono">v1.0.0 (MVP)</span>
+            </div>
+          </div>
+        </div>
+        <nav class="tab-bar" data-tabbar="more"></nav>
+      </section>
+
+      <!-- 09b: 网站只读子页 -->
+      <section class="screen" id="scr-websites">
+        <div class="topbar">
+          <button class="back-btn" onclick="go('scr-more')">‹ 更多</button>
+          <div class="topbar-title">网站管理（只读）</div>
+          <button class="icon-btn" onclick="toast('已刷新网站与证书状态')">↻</button>
+        </div>
+        <div class="scroll">
+          <div class="notice">当前一期支持网站状态与 SSL 证书巡检，站点配置修改与建站将在二期版本提供。</div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong style="font-size:15px;">api.hwpanel.dev</strong>
+              <span class="chip success">运行中</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              <span class="chip">反向代理 · OpenResty</span>
+              <span class="chip success">HTTPS · 剩余 68 天</span>
+            </div>
+            <div class="muted mono" style="margin-top:10px;">代理目标：http://127.0.0.1:8080 · 端口 443</div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong style="font-size:15px;">blog.example.com</strong>
+              <span class="chip success">运行中</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              <span class="chip">运行环境 · Halo</span>
+              <span class="chip warning">HTTPS · 剩余 11 天</span>
+            </div>
+            <div class="muted mono" style="margin-top:10px;">颁发机构：Let's Encrypt · 到期 2026-12-08</div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <strong style="font-size:15px;">staging.internal.lan</strong>
+              <span class="chip">已停止</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+              <span class="chip">静态网站</span>
+              <span class="chip">未启用 HTTPS</span>
+            </div>
+            <div class="muted mono" style="margin-top:10px;">根目录：/opt/1panel/www/sites/staging</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Modal / Sheet Overlay -->
+      <div class="backdrop" id="modalBackdrop"></div>
+      <div class="toast" id="toast"></div>
+      <div class="home-indicator"></div>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      screen: 'scr-overview',
+      theme: 'light',
+      pollSec: 5,
+      procSort: 'cpu',
+      drillTab: 'cpu',
+      contTab: 'containers',
+      appsTab: 'store',
+      currentServerId: 's1',
+      servers: [
+        { id: 's1', name: '生产主节点-华东', host: 'https://hz.example.com:8443', hostname: 'prod-ecs-hz-01', os: 'Ubuntu 24.04 LTS', uptime: '48天 12小时', ver: 'v2.0.8', auth: 'API-Key', online: true, isDefault: true, cpu: 38, mem: 74, containers: '12/14' },
+        { id: 's2', name: '新加坡出海节点', host: 'https://sg-01.example.com:8443', hostname: 'sg-prod-01', os: 'Debian 12', uptime: '19天 04小时', ver: 'v2.0.8', auth: '用户名密码', online: true, isDefault: false, cpu: 22, mem: 49, containers: '6/6' },
+        { id: 's3', name: '家庭 NAS 测试机', host: 'https://192.168.1.50:9999', hostname: 'home-nas', os: 'Ubuntu 22.04', uptime: '-', ver: 'v2.0.6', auth: 'API-Key', online: false, isDefault: false, cpu: 0, mem: 0, containers: '0/5', lastSeen: '2小时前 · 连接超时' }
+      ],
+      containers: [
+        { id: 'c1', name: 'openresty-prod', image: '1panel/openresty:1.21.4.3', state: 'running', ports: '80, 443 -> 80, 443', cpu: '4.2%', mem: '128 MB' },
+        { id: 'c2', name: 'mysql-8.0', image: 'mysql:8.0.39', state: 'running', ports: '3306 -> 3306', cpu: '11.6%', mem: '1.42 GB' },
+        { id: 'c3', name: 'redis-cache', image: 'redis:7.2-alpine', state: 'running', ports: '6379 -> 6379', cpu: '1.1%', mem: '64 MB' },
+        { id: 'c4', name: 'worker-legacy', image: 'registry.local/worker:v2', state: 'stopped', ports: '-', cpu: '-', mem: '-' }
+      ],
+      composes: [
+        { id: 'p1', name: 'blog-stack', status: 'running', ratio: '3/3 运行中', updated: '2026-11-20 14:22', yaml: 'services:\n  halo:\n    image: halohub/halo:2.19\n    restart: always\n    ports:\n      - "8090:8090"\n  postgres:\n    image: postgres:16-alpine\n    restart: always' },
+        { id: 'p2', name: 'monitor-suite', status: 'partial', ratio: '2/3 部分运行', updated: '2026-11-25 09:10', yaml: 'services:\n  prometheus:\n    image: prom/prometheus:latest\n  grafana:\n    image: grafana/grafana:11.2' }
+      ],
+      appsStore: [
+        { id: 'a1', name: 'Halo 建站', cat: '建站', ver: '2.19.2', desc: '现代化开源建站工具，支持主题与插件生态', installed: true },
+        { id: 'a2', name: 'Uptime Kuma', cat: '监控', ver: '1.23.15', desc: '轻量自托管服务可用性与证书状态监控面板', installed: false },
+        { id: 'a3', name: 'MySQL', cat: '数据库', ver: '8.0.39', desc: '经典关系型数据库服务，支持自动定时备份', installed: true }
+      ],
+      appsInstalled: [
+        { id: 'i1', instance: 'halo-main', app: 'Halo', ver: '2.18.0', latest: '2.19.2', status: 'running', upgradable: true },
+        { id: 'i2', instance: 'mysql-prod', app: 'MySQL', ver: '8.0.39', latest: '8.0.39', status: 'running', upgradable: false },
+        { id: 'i3', instance: 'redis-01', app: 'Redis', ver: '7.2.5', latest: '7.2.5', status: 'stopped', upgradable: false }
+      ],
+      crons: [
+        { id: 't1', name: '每日数据库全量备份', type: '数据库备份', schedule: '每天 03:00', cron: '0 3 * * *', enabled: true, running: false, lastStatus: 'success', lastAt: '今天 03:00 · 耗时 18s' },
+        { id: 't2', name: '清理 Docker 无用镜像', type: 'Shell 脚本', schedule: '每周日 04:30', cron: '30 4 * * 0', enabled: true, running: true, lastStatus: 'running', lastAt: '正在执行 · 已运行 12s' },
+        { id: 't3', name: 'SSL 证书到期巡检通知', type: 'URL 访问', schedule: '每天 09:00', cron: '0 9 * * *', enabled: false, running: false, lastStatus: 'failed', lastAt: '11-24 09:00 · 超时' }
+      ],
+      procs: [
+        { name: 'mysqld', pid: 1428, cpu: 14.8, mem: 1456 },
+        { name: 'java (halo)', pid: 2201, cpu: 9.2, mem: 892 },
+        { name: '1panel-core', pid: 981, cpu: 3.4, mem: 164 },
+        { name: 'openresty', pid: 1120, cpu: 2.1, mem: 128 },
+        { name: 'redis-server', pid: 1580, cpu: 1.1, mem: 64 }
+      ]
+    };
+
+    const quickNavItems = [
+      ['scr-servers', '01 全部面板总览', '启动页'],
+      ['scr-connect', '02 添加面板/鉴权', '登录'],
+      ['scr-overview', '03 单机概览页', 'Tab 1'],
+      ['scr-drilldown', '04 监控下钻详情', '下钻'],
+      ['scr-containers', '05 容器与编排', 'Tab 2'],
+      ['scr-apps', '07 应用商店', 'Tab 3'],
+      ['scr-tasks', '08 计划任务', 'Tab 4'],
+      ['scr-more', '09 更多与设置', 'Tab 5'],
+      ['scr-websites', '09b 网站只读列表', '只读']
+    ];
+
+    const tabsMeta = [
+      { id: 'overview', label: '概览', icon: '◎', screen: 'scr-overview' },
+      { id: 'containers', label: '容器', icon: '⬡', screen: 'scr-containers' },
+      { id: 'apps', label: '应用', icon: '⊞', screen: 'scr-apps' },
+      { id: 'tasks', label: '任务', icon: '◷', screen: 'scr-tasks' },
+      { id: 'more', label: '更多', icon: '☰', screen: 'scr-more' }
+    ];
+
+    function renderTabBars() {
+      document.querySelectorAll('[data-tabbar]').forEach(nav => {
+        const activeId = nav.getAttribute('data-tabbar');
+        nav.innerHTML = tabsMeta.map(t => `
+          <button class="tab-item ${t.id === activeId ? 'active' : ''}" onclick="go('${t.screen}')">
+            <span style="font-size:18px;line-height:1;">${t.icon}</span>
+            <span>${t.label}</span>
+            <span class="dot"></span>
+          </button>
+        `).join('');
+      });
+    }
+
+    function renderQuickNav() {
+      document.getElementById('quickNav').innerHTML = quickNavItems.map(([id, label, tag]) => `
+        <button class="${state.screen === id ? 'active' : ''}" onclick="go('${id}')">
+          <span>${label}</span><span class="tag">${tag}</span>
+        </button>
+      `).join('');
+    }
+
+    function go(screenId) {
+      state.screen = screenId;
+      document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === screenId));
+      renderQuickNav();
+      if (screenId === 'scr-servers') renderServers();
+      if (screenId === 'scr-containers') renderContainers();
+      if (screenId === 'scr-apps') renderApps();
+      if (screenId === 'scr-tasks') renderCrons();
+      if (screenId === 'scr-drilldown') renderDrilldown();
+    }
+
+    function setTheme(mode) {
+      state.theme = mode;
+      document.documentElement.setAttribute('data-theme', mode);
+      document.getElementById('btnLight').classList.toggle('active', mode === 'light');
+      document.getElementById('btnDark').classList.toggle('active', mode === 'dark');
+      document.getElementById('moreThemeVal').textContent = (mode === 'light' ? '浅色模式' : '深色模式') + ' ▾';
+    }
+    function toggleTheme() { setTheme(state.theme === 'light' ? 'dark' : 'light'); }
+
+    function cyclePolling() {
+      const seq = [3, 5, 10, 0];
+      state.pollSec = seq[(seq.indexOf(state.pollSec) + 1) % seq.length];
+      document.getElementById('morePollVal').textContent = state.pollSec ? `每 ${state.pollSec} 秒 ▾` : '仅手动刷新 ▾';
+      document.getElementById('pollBadge').textContent = state.pollSec ? `${state.pollSec}s 实时` : '手动模式';
+      toast('已更新概览刷新频率');
+    }
+
+    function syncCurrentServerUI() {
+      const s = state.servers.find(x => x.id === state.currentServerId) || state.servers[0];
+      document.getElementById('curServerLabel').textContent = s.name;
+      document.querySelectorAll('.sync-server-name').forEach(el => el.textContent = s.name);
+      document.getElementById('dashHostname').textContent = s.hostname;
+      document.getElementById('dashMeta').textContent = `${s.os} · 运行 ${s.uptime} · 1Panel ${s.ver}`;
+    }
+
+    function renderServers() {
+      const q = (document.getElementById('serverSearch')?.value || '').trim().toLowerCase();
+      const list = state.servers.filter(s => s.name.toLowerCase().includes(q) || s.host.toLowerCase().includes(q));
+      const online = state.servers.filter(s => s.online).length;
+      document.getElementById('serverSummary').innerHTML = `
+        <span class="muted">全部面板 <strong>${state.servers.length}</strong></span>
+        <span class="chip success">在线 ${online}</span>
+        <span class="chip">离线 ${state.servers.length - online}</span>
+      `;
+      document.getElementById('serverList').innerHTML = list.map(s => `
+        <div class="card" style="${s.online ? '' : 'background:var(--surface-muted);opacity:0.86;'}">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="brand-logo" style="width:42px;height:42px;border-radius:13px;${s.online ? '' : 'background:var(--control-border);box-shadow:none;'}">${s.online ? '1P' : '!'}</div>
+            <div style="flex:1;min-width:0;cursor:pointer;" onclick="selectServer('${s.id}')">
+              <div style="font-size:15px;font-weight:700;">${s.name}</div>
+              <div class="muted mono" style="margin-top:2px;overflow:hidden;text-overflow:ellipsis;">${s.host}</div>
+            </div>
+            <button class="chip" onclick="openDeleteServerModal('${s.id}')">移除</button>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0;">
+            <span class="chip ${s.online ? 'success' : 'danger'}">${s.online ? '在线' : '无法连接'}</span>
+            ${s.isDefault ? '<span class="chip blue">默认服务器</span>' : `<button class="chip" onclick="setDefaultServer('${s.id}')">设为默认</button>`}
+            <span class="chip">${s.ver}</span>
+            <span class="chip">${s.auth}</span>
+          </div>
+          ${s.online ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;cursor:pointer;" onclick="selectServer('${s.id}')">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;"><span class="muted">CPU</span><strong class="tnum">${s.cpu}%</strong></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${s.cpu}%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;"><span class="muted">内存</span><strong class="tnum">${s.mem}%</strong></div>
+                <div class="bar-track"><div class="bar-fill" style="width:${s.mem}%;background:${s.mem >= 70 ? 'var(--warning)' : 'var(--brand)'}"></div></div>
+              </div>
+            </div>
+            <div class="muted" style="margin-top:10px;">运行 ${s.uptime} · 容器 ${s.containers}</div>
+          ` : `<div class="muted" style="color:var(--danger-text);">${s.lastSeen}</div>`}
+        </div>
+      `).join('');
+    }
+
+    function selectServer(id) {
+      const s = state.servers.find(x => x.id === id);
+      if (!s || !s.online) { toast('该服务器当前离线，请检查网络或编辑连接'); return; }
+      state.currentServerId = id;
+      syncCurrentServerUI();
+      closeModal();
+      go('scr-overview');
+      toast(`已切换至 ${s.name}`);
+    }
+    function setDefaultServer(id) {
+      state.servers.forEach(s => s.isDefault = (s.id === id));
+      renderServers();
+      toast('已设为默认服务器，下次启动直达概览页');
+    }
+
+    function setAuthMode(mode) {
+      document.getElementById('authApiBtn').classList.toggle('active', mode === 'api_key');
+      document.getElementById('authPwdBtn').classList.toggle('active', mode === 'password');
+      document.getElementById('authApiFields').style.display = mode === 'api_key' ? '' : 'none';
+      document.getElementById('authPwdFields').style.display = mode === 'password' ? '' : 'none';
+    }
+    function toggleSelfSigned() {
+      const sw = document.getElementById('swSelfSigned');
+      sw.classList.toggle('on');
+      document.getElementById('selfSignedWarn').style.display = sw.classList.contains('on') ? '' : 'none';
+    }
+    function testConnection() {
+      const isPwd = document.getElementById('authPwdBtn').classList.contains('active');
+      if (isPwd) {
+        openModal(`
+          <div class="dialog">
+            <h3 style="font-size:17px;">两步验证（MFA）</h3>
+            <p class="muted" style="font-size:13px;">目标 1Panel 实例已启用 MFA，请输入 6 位动态验证码完成认证。</p>
+            <input class="mono" style="text-align:center;font-size:22px;letter-spacing:8px;height:48px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft);" value="482910" maxlength="6" />
+            <div class="btn-row">
+              <button class="btn secondary" style="flex:1;" onclick="closeModal()">取消</button>
+              <button class="btn primary" style="flex:1;" onclick="finishConnTest()">验证并连接</button>
+            </div>
+          </div>
+        `);
+      } else {
+        finishConnTest();
+      }
+    }
+    function finishConnTest() {
+      closeModal();
+      const box = document.getElementById('connResult');
+      box.style.display = '';
+      box.className = 'notice success';
+      box.textContent = '连接成功 · 检测到 1Panel v2.0.8 · 主机 hk-edge-02';
+    }
+    function saveServer() {
+      toast('连接配置已安全保存至本机 Keychain');
+      go('scr-overview');
+    }
+
+    function renderTopProcs() {
+      const sorted = [...state.procs].sort((a, b) => state.procSort === 'cpu' ? b.cpu - a.cpu : b.mem - a.mem);
+      document.getElementById('topProcList').innerHTML = sorted.map(p => `
+        <div class="list-row" style="padding:8px 0;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">${p.name}</div>
+            <div class="muted mono" style="font-size:11px;">PID ${p.pid}</div>
+          </div>
+          <div style="text-align:right;" class="tnum">
+            <div style="font-size:12.5px;font-weight:650;color:${state.procSort === 'cpu' ? 'var(--brand)' : 'var(--ink)'};">CPU ${p.cpu}%</div>
+            <div class="muted" style="font-size:11px;color:${state.procSort === 'mem' ? 'var(--brand)' : 'var(--muted)'};">${p.mem} MB</div>
+          </div>
+        </div>
+      `).join('');
+    }
+    function setProcSort(s) {
+      state.procSort = s;
+      document.getElementById('procCpuBtn').classList.toggle('active', s === 'cpu');
+      document.getElementById('procMemBtn').classList.toggle('active', s === 'mem');
+      renderTopProcs();
+    }
+
+    function openDrilldown(tab) { state.drillTab = tab; go('scr-drilldown'); }
+    function renderDrilldown() {
+      const tabs = [['cpu','CPU'],['memory','内存'],['disk','磁盘'],['network','网络'],['processes','进程']];
+      document.getElementById('drillTabs').innerHTML = tabs.map(([k, l]) => `
+        <button class="filter-pill ${state.drillTab === k ? 'active' : ''}" onclick="openDrilldown('${k}')">${l}</button>
+      `).join('');
+      const isProc = state.drillTab === 'processes';
+      document.getElementById('trendCard').style.display = isProc ? 'none' : '';
+      const titles = { cpu: 'CPU 使用率历史趋势', memory: '内存占用历史趋势', disk: '磁盘 I/O 历史趋势', network: '网络吞吐历史趋势' };
+      document.getElementById('trendTitle').textContent = titles[state.drillTab] || '';
+      const body = document.getElementById('drillBody');
+      if (state.drillTab === 'cpu') {
+        body.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:10px;">逻辑核心实时负载（8 核）</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${[42,35,51,28,39,44,31,34].map((v,i)=>`<div><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;"><span class="muted">Core #${i}</span><strong class="tnum">${v}%</strong></div><div class="bar-track"><div class="bar-fill" style="width:${v}%"></div></div></div>`).join('')}</div></div>`;
+      } else if (state.drillTab === 'memory') {
+        body.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:8px;">内存细分</div><div class="list-row"><span class="muted">总物理内存</span><strong class="tnum">16.0 GB</strong></div><div class="list-row"><span class="muted">已使用</span><strong class="tnum">11.8 GB (74%)</strong></div><div class="list-row"><span class="muted">缓存 / Buffers</span><strong class="tnum">2.9 GB</strong></div><div class="list-row"><span class="muted">Swap 分区</span><strong class="tnum">0.4 / 4.0 GB</strong></div></div>`;
+      } else if (state.drillTab === 'disk') {
+        body.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:10px;">全部挂载点</div>${[['/', 'ext4', '112 / 200 GB', 56],['/data', 'xfs', '410 / 500 GB', 82],['/boot', 'ext4', '0.4 / 1.0 GB', 40]].map(([p,fs,u,pct])=>`<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;"><strong class="mono">${p} <span class="muted">${fs}</span></strong><span class="tnum">${u} (${pct}%)</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${pct>=80?'var(--warning)':'var(--chart-disk)'}"></div></div></div>`).join('')}</div>`;
+      } else if (state.drillTab === 'network') {
+        body.innerHTML = `<div class="card"><div class="card-title" style="margin-bottom:8px;">网卡明细（eth0）</div><div class="list-row"><span class="muted">实时上行</span><strong class="tnum" style="color:var(--brand);">1.42 MB/s</strong></div><div class="list-row"><span class="muted">实时下行</span><strong class="tnum" style="color:var(--success-text);">4.86 MB/s</strong></div><div class="list-row"><span class="muted">累计发送 / 接收</span><strong class="tnum">128 GB / 412 GB</strong></div></div>`;
+      } else {
+        body.innerHTML = `<div class="notice">进程列表一期为只读监控视图，不支持远程结束进程（Kill）。</div><div class="card">${state.procs.map(p=>`<div class="list-row"><div><div style="font-size:14px;font-weight:600;">${p.name}</div><div class="muted mono">PID ${p.pid} · root</div></div><div style="text-align:right;" class="tnum"><strong>${p.cpu}%</strong><div class="muted">${p.mem} MB</div></div></div>`).join('')}</div>`;
+      }
+    }
+
+    function setContainerTab(tab) {
+      state.contTab = tab;
+      document.getElementById('segContBtn').classList.toggle('active', tab === 'containers');
+      document.getElementById('segCompBtn').classList.toggle('active', tab === 'compose');
+      document.getElementById('contSearch').placeholder = tab === 'containers' ? '搜索容器名称或镜像' : '搜索 Compose 编排名称';
+      renderContainers();
+    }
+
+    function renderContainers() {
+      const q = (document.getElementById('contSearch')?.value || '').trim().toLowerCase();
+      document.getElementById('contFilters').innerHTML = (state.contTab === 'containers'
+        ? ['全部','运行中','已停止','异常'] : ['全部','运行中','部分运行','已停止'])
+        .map((l, i) => `<button class="filter-pill ${i === 0 ? 'active' : ''}">${l}</button>`).join('');
+      const box = document.getElementById('contList');
+      if (state.contTab === 'containers') {
+        box.innerHTML = state.containers.filter(c => c.name.includes(q) || c.image.includes(q)).map(c => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="openContainerDetail('${c.id}')">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="dot-status ${c.state === 'running' ? 'online' : 'offline'}"></span>
+                <strong style="font-size:15px;">${c.name}</strong>
+              </div>
+              <span class="chip ${c.state === 'running' ? 'success' : ''}">${c.state === 'running' ? '运行中' : '已停止'}</span>
+            </div>
+            <div class="muted mono" style="margin-top:6px;">${c.image}</div>
+            <div class="muted tnum" style="margin-top:4px;">端口：${c.ports} · CPU ${c.cpu} · 内存 ${c.mem}</div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn sm ${c.state === 'running' ? 'primary' : 'soft'}" onclick="toggleContainer('${c.id}')">${c.state === 'running' ? '停止' : '启动'}</button>
+              <button class="btn sm secondary" onclick="toast('正在重启 ${c.name}...')">重启</button>
+              <button class="btn sm secondary" onclick="openContainerDetail('${c.id}', true)">日志</button>
+              <button class="btn sm danger-soft" onclick="openDangerConfirm('确认删除容器？','将永久删除容器「${c.name}」，未持久化数据将不可恢复。','确认删除', true)">删除</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        box.innerHTML = state.composes.filter(p => p.name.includes(q)).map(p => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="openComposeDetail('${p.id}')">
+              <strong style="font-size:15px;">${p.name}</strong>
+              <span class="chip ${p.status === 'running' ? 'success' : 'warning'}">${p.ratio}</span>
+            </div>
+            <div class="muted" style="margin-top:6px;">更新时间：${p.updated}</div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn sm soft" onclick="toast('已重启编排 ${p.name}')">重启</button>
+              <button class="btn sm warning-soft" onclick="openDangerConfirm('确认重建编排？','将重新构建并重启「${p.name}」，期间业务会短暂中断。','确认重建', false)">重建</button>
+              <button class="btn sm secondary" onclick="openComposeDetail('${p.id}')">YAML / 日志</button>
+              <button class="btn sm danger-soft" onclick="openDangerConfirm('确认删除编排？','将停止并移除编排「${p.name}」下的全部容器，不可恢复。','确认删除', false)">删除</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function toggleContainer(id) {
+      const c = state.containers.find(x => x.id === id);
+      c.state = c.state === 'running' ? 'stopped' : 'running';
+      renderContainers();
+      toast(`${c.name} 已${c.state === 'running' ? '启动' : '停止'}`);
+    }
+
+    function openContainerDetail(id, focusLogs) {
+      const c = state.containers.find(x => x.id === id);
+      document.getElementById('detailTitle').textContent = c.name;
+      document.getElementById('detailStatusChip').textContent = c.state === 'running' ? '运行中' : '已停止';
+      document.getElementById('detailStatusChip').className = 'chip ' + (c.state === 'running' ? 'success' : '');
+      document.getElementById('contDetailScroll').innerHTML = `
+        <div class="card">
+          <div class="btn-row">
+            <button class="btn sm secondary" ${c.state === 'running' ? 'disabled' : ''} onclick="toggleContainer('${c.id}');openContainerDetail('${c.id}')">启动</button>
+            <button class="btn sm primary" ${c.state !== 'running' ? 'disabled' : ''} onclick="toggleContainer('${c.id}');openContainerDetail('${c.id}')">停止</button>
+            <button class="btn sm secondary" onclick="toast('正在重启 ${c.name}')">重启</button>
+            <button class="btn sm danger-soft" onclick="openDangerConfirm('确认删除容器？','将永久删除容器「${c.name}」。','确认删除', true)">删除</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:8px;">基础信息</div>
+          <div class="list-row"><span class="muted">镜像</span><span class="mono" style="font-size:12px;">${c.image}</span></div>
+          <div class="list-row"><span class="muted">端口映射</span><span class="mono" style="font-size:12px;">${c.ports}</span></div>
+          <div class="list-row"><span class="muted">挂载卷</span><span class="mono" style="font-size:12px;">/opt/1panel/apps → /data</span></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">实时日志（最近 200 行）</span>
+            <button class="chip blue" onclick="toast('已复制可见日志到剪贴板')">复制</button>
+          </div>
+          <div class="code-box mono">2026-11-27 09:40:11 [INFO] server listening on :80
+2026-11-27 09:40:28 [INFO] GET /health 200 1.4ms
+2026-11-27 09:41:02 [INFO] upstream keepalive pool active=4</div>
+        </div>
+      `;
+      go('scr-cont-detail');
+    }
+
+    function openComposeDetail(id) {
+      const p = state.composes.find(x => x.id === id);
+      document.getElementById('detailTitle').textContent = p.name;
+      document.getElementById('detailStatusChip').textContent = p.ratio;
+      document.getElementById('detailStatusChip').className = 'chip ' + (p.status === 'running' ? 'success' : 'warning');
+      document.getElementById('contDetailScroll').innerHTML = `
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">YAML 配置编辑器</span>
+            <button class="btn sm primary" onclick="validateAndSaveYaml()">校验并保存</button>
+          </div>
+          <textarea id="yamlEditArea" class="yaml-editor mono">${p.yaml}</textarea>
+          <div id="yamlErr" class="notice danger" style="display:none;margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">编排合并日志</span>
+            <button class="chip blue" onclick="toast('已复制编排日志')">复制</button>
+          </div>
+          <div class="code-box mono">halo-1      | Started HaloApplication in 4.12s
+postgres-1  | database system is ready to accept connections</div>
+        </div>
+      `;
+      go('scr-cont-detail');
+    }
+    function validateAndSaveYaml() {
+      const txt = document.getElementById('yamlEditArea').value;
+      const err = document.getElementById('yamlErr');
+      if (!txt.trim() || txt.includes('\t')) {
+        err.style.display = '';
+        err.textContent = 'YAML 校验未通过：检测到空内容或非法 Tab 缩进，请改用空格缩进。';
+        return;
+      }
+      err.style.display = 'none';
+      toast('YAML 已校验并保存');
+    }
+
+    function setAppsTab(tab) {
+      state.appsTab = tab;
+      document.getElementById('segStoreBtn').classList.toggle('active', tab === 'store');
+      document.getElementById('segInstBtn').classList.toggle('active', tab === 'installed');
+      renderApps();
+    }
+    function renderApps() {
+      const box = document.getElementById('appsContent');
+      if (state.appsTab === 'store') {
+        box.innerHTML = state.appsStore.map(a => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+              <div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <strong style="font-size:15px;">${a.name}</strong>
+                  <span class="chip">${a.cat}</span>
+                  ${a.installed ? '<span class="chip success">已安装</span>' : ''}
+                </div>
+                <div class="muted" style="margin-top:5px;line-height:1.45;">${a.desc}</div>
+              </div>
+              <button class="btn sm primary" onclick="openAppInstallModal('${a.name}','${a.ver}')">安装</button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        box.innerHTML = state.appsInstalled.map(i => `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <strong style="font-size:15px;">${i.instance}</strong>
+                <div class="muted mono" style="margin-top:3px;">${i.app} · v${i.ver}</div>
+              </div>
+              <div style="display:flex;gap:5px;">
+                ${i.upgradable ? '<span class="chip blue">可升级 v' + i.latest + '</span>' : ''}
+                <span class="chip ${i.status === 'running' ? 'success' : ''}">${i.status === 'running' ? '运行中' : '已停止'}</span>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn sm secondary" onclick="toast('已切换 ${i.instance} 运行状态')">${i.status === 'running' ? '停止' : '启动'}</button>
+              ${i.upgradable ? `<button class="btn sm primary" onclick="toast('正在升级 ${i.instance} 至 v${i.latest}，进入任务日志...')">升级</button>` : ''}
+              <button class="btn sm danger-soft" onclick="openUninstallModal('${i.instance}','v${i.ver}')">卸载</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function openAppInstallModal(name, ver) {
+      openModal(`
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <h3 style="font-size:17px;">安装 ${name} (${ver})</h3>
+          <div class="card" style="padding:10px 14px;background:var(--surface-soft);box-shadow:none;">
+            <div class="field"><label>实例名称 *</label><input value="${name.toLowerCase().replace(/\s+/g,'-')}-01" /></div>
+            <div class="field"><label>对外端口 *</label><input class="mono" value="3001" /></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn secondary" style="flex:1;" onclick="closeModal()">取消</button>
+            <button class="btn primary" style="flex:1.3;" onclick="closeModal();toast('已提交安装任务，实时拉取安装日志中...')">开始安装</button>
+          </div>
+        </div>
+      `, true);
+    }
+
+    function openUninstallModal(name, ver) {
+      openModal(`
+        <div class="dialog">
+          <h3 style="font-size:17px;color:var(--danger-text);">确认卸载应用？</h3>
+          <p class="muted" style="font-size:13px;line-height:1.55;">卸载将停止并移除应用实例「<strong>${name}</strong>」(${ver})。</p>
+          <label class="check-item"><input type="checkbox" /> <span>同时删除应用持久化数据与备份</span></label>
+          <label class="check-item"><input type="checkbox" /> <span>同时删除关联容器镜像</span></label>
+          <div class="btn-row">
+            <button class="btn secondary" style="flex:1;" onclick="closeModal()">取消</button>
+            <button class="btn danger" style="flex:1;" onclick="closeModal();toast('已发起卸载任务：${name}')">确认卸载</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function renderCrons() {
+      document.getElementById('cronList').innerHTML = state.crons.map(t => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div>
+              <strong style="font-size:15px;">${t.name}</strong>
+              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                <span class="chip">${t.type}</span>
+                <span class="chip ${t.lastStatus === 'success' ? 'success' : t.lastStatus === 'running' ? 'warning' : 'danger'}">${t.lastAt}</span>
+              </div>
+            </div>
+            <button class="switch ${t.enabled ? 'on' : ''}" onclick="toggleCron('${t.id}')"></button>
+          </div>
+          <div class="muted mono" style="margin-top:10px;">周期：${t.schedule} (${t.cron})</div>
+          <div class="btn-row" style="margin-top:12px;">
+            ${t.running
+              ? `<button class="btn sm warning-soft" onclick="stopCron('${t.id}')">停止执行</button>`
+              : `<button class="btn sm soft" onclick="runCron('${t.id}')">立即执行</button>`}
+            <button class="btn sm secondary" onclick="openCronLogModal('${t.name}')">执行日志</button>
+            <button class="btn sm danger-soft" onclick="openDangerConfirm('确认删除计划任务？','将永久删除计划任务「${t.name}」及历史记录，不可恢复。','确认删除', false)">删除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    function toggleCron(id) {
+      const t = state.crons.find(x => x.id === id);
+      t.enabled = !t.enabled;
+      renderCrons();
+      toast(`${t.name} 已${t.enabled ? '启用' : '禁用'}`);
+    }
+    function runCron(id) {
+      const t = state.crons.find(x => x.id === id);
+      t.running = true; t.lastStatus = 'running'; t.lastAt = '正在执行 · 刚刚';
+      renderCrons();
+      toast(`已手动触发「${t.name}」`);
+    }
+    function stopCron(id) {
+      const t = state.crons.find(x => x.id === id);
+      t.running = false; t.lastStatus = 'failed'; t.lastAt = '已手动停止 · 刚刚';
+      renderCrons();
+      toast(`已停止执行「${t.name}」`);
+    }
+    function openCronLogModal(name) {
+      openModal(`
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong style="font-size:15px;">${name} · 执行日志</strong>
+            <button class="chip blue" onclick="toast('已复制任务日志')">复制</button>
+          </div>
+          <div class="code-box mono">[03:00:01] Start scheduled task...
+[03:00:04] Dumping database prod_main (gzip)
+[03:00:18] Backup saved: /opt/1panel/backup/db_20261127.sql.gz
+[03:00:19] Task finished with exit code 0</div>
+          <button class="btn secondary" onclick="closeModal()">关闭</button>
+        </div>
+      `, true);
+    }
+
+    function openServerSheet() {
+      openModal(`
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <h3 style="font-size:16px;">切换 1Panel 服务器</h3>
+          ${state.servers.map(s => `
+            <button class="list-row" style="width:100%;" onclick="selectServer('${s.id}')">
+              <div style="display:flex;align-items:center;gap:10px;text-align:left;">
+                <span class="dot-status ${s.online ? 'online' : 'offline'}"></span>
+                <div>
+                  <div style="font-size:14px;font-weight:650;">${s.name} ${s.isDefault ? '<span class="chip blue" style="margin-left:4px;">默认</span>' : ''}</div>
+                  <div class="muted mono">${s.host}</div>
+                </div>
+              </div>
+              <span style="color:var(--brand);font-weight:700;">${s.id === state.currentServerId ? '✓' : ''}</span>
+            </button>
+          `).join('')}
+          <div class="btn-row" style="margin-top:4px;">
+            <button class="btn soft" style="flex:1;" onclick="closeModal();go('scr-servers')">查看全部面板</button>
+            <button class="btn primary" style="flex:1;" onclick="closeModal();go('scr-connect')">+ 添加新面板</button>
+          </div>
+        </div>
+      `, true);
+    }
+
+    function openDeleteServerModal(id) {
+      const s = state.servers.find(x => x.id === id);
+      openDangerConfirm('移除服务器连接？', `将从本机移除「${s.name}」的连接配置与本地凭据，不影响远端服务器运行。`, '确认移除', false);
+    }
+
+    function openDangerConfirm(title, message, confirmText, showForceCheck) {
+      openModal(`
+        <div class="dialog">
+          <h3 style="font-size:17px;color:var(--danger-text);">${title}</h3>
+          <p class="muted" style="font-size:13px;line-height:1.55;">${message}</p>
+          ${showForceCheck ? '<label class="check-item"><input type="checkbox" /> <span>强制删除运行中的容器</span></label>' : ''}
+          <div class="btn-row">
+            <button class="btn secondary" style="flex:1;" onclick="closeModal()">取消</button>
+            <button class="btn danger" style="flex:1;" onclick="closeModal();toast('已执行：${confirmText}')">${confirmText}</button>
+          </div>
+        </div>
+      `);
+    }
+
+    function openModal(html, isSheet = false) {
+      const bd = document.getElementById('modalBackdrop');
+      bd.className = 'backdrop open' + (isSheet ? ' sheet-mode' : '');
+      bd.innerHTML = html;
+      bd.onclick = (e) => { if (e.target === bd && isSheet) closeModal(); };
+    }
+    function closeModal() {
+      const bd = document.getElementById('modalBackdrop');
+      bd.className = 'backdrop';
+      bd.innerHTML = '';
+    }
+
+    let toastTimer;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    renderTabBars();
+    renderQuickNav();
+    syncCurrentServerUI();
+    renderTopProcs();
+  </script>
+</body>
+</html>
