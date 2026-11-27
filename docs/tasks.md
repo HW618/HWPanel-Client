@@ -41,15 +41,16 @@ T05 完成前，T06/T08/T10/T11/T12 只能做静态部分（骨架屏、空态�
 
 **产出**
 - `scripts/build-tokens.mjs`：`tokens.json` → `src/core/theme/tokens.generated.ts`
-- 别名表（4 个内部 ID）、非 DTCG 节点处理、平台换算（见 `contracts/local/tokens.md`）
+- 消费 **v1.0.1 严格 DTCG**（184 叶子令牌）：平台换算 + `$extensions.hwpanel` 分流
+- 别名兜底表 + 未知 ID 报错退出（见 `contracts/local/tokens.md`）
 - `ThemeProvider`：跟随系统 / 浅色 / 深色，即时切换
-- 缺口令牌先以常量补齐
+- `src/core/theme/blur.ts`：`expo-blur` 强度的真机定标值
 - CI 校验"重新生成 == 仓库版本"
 
 **验收**
 - 三态切换全局即时生效，无闪白/闪黑
 - 源码扫描：`src/**` 无 `#RRGGBB` 字面量（lint 规则）
-- 对比度报告产出（不达标项列给 pm-bot，不自行改色）
+- 对比度门禁脚本跑通（基线已全部 ≥ 4.5:1，最低 `text.subtle` 浅色 canvas 4.69）
 - AC-07.2 的前置条件成立
 
 **依赖**：T01

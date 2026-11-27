@@ -97,12 +97,13 @@ docs/design/tokens.json
   → ThemeProvider（跟随系统 / 浅色 / 深色）
 ```
 
-必须处理的四件事（否则生成的令牌不可用）：
+令牌源已于 v1.0.1 收敛为**严格 DTCG**（184 个叶子令牌，0 结构错误，重跑审计 0 断裂引用，16 组文本对比度全部 ≥ 4.5:1）。管线要做的是三件事：
 
-1. **内部 ID 别名**：原型里有 4 个 OpenDesign 内部 ID 泄漏，管线按别名表归一，不修改 pm-bot 的原始文件。别名表见 `contracts/local/tokens.md`。
-2. **非 DTCG 节点**：`typography.scale.*`、`layout.*`、`components.*` 没有 `$value`，需在管线里按"裸值节点"读取（或由 pm-bot 改结构），不能依赖标准 DTCG 解析。
-3. **平台换算**：`letterSpacing` 的 `em` → 逻辑像素（× fontSize）；`fontWeight` 650/600 → 双端可用档位（iOS 允许变量字重，Android 只有 400/500/700，650 归一到 600 或改用变量字体）；`elevation.*` 的 CSS shadow 字符串 → `{ shadowColor, shadowOffset, shadowOpacity, shadowRadius, elevation }`。
-4. **补缺令牌**：模糊半径、禁用透明度、描边宽度、图标尺寸、骨架屏色、图表轴/网格色、按压覆盖色。缺口清单与建议值见 `contracts/local/tokens.md`。
+1. **别名兜底**：4 个 OpenDesign 内部 ID 已被 pm-bot 修掉；管线仍保留别名表与"未知 ID 报错退出"，防止将来重新导出设计稿时再带出来。见 `contracts/local/tokens.md`。
+2. **平台换算**：`"15px"` → 数字；`{typography.fontFamily.sans}` 别名引用先解析；`elevation` 结构化阴影 → iOS `shadow*` + Android `elevation`（取 `$extensions.hwpanel.androidElevation`）；`motion` 毫秒与贝塞尔参数。
+3. **`$extensions.hwpanel` 分流**：`layout` / `components` 不是主题令牌，单独输出为 `layoutConfig` / `appConfig`，别混进 `Theme`。
+
+`expo-blur` 的 `intensity` 与 px 不是线性关系，`blur.tabBar = 18px` 需真机定标后写死为实测值（`src/core/theme/blur.ts`），不要直接把 18 当 intensity。
 
 生成物入库（`tokens.generated.ts`），CI 校验"重跑生成 == 仓库版本"，防止令牌与代码漂移。
 

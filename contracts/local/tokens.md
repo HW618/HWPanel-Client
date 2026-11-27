@@ -1,94 +1,98 @@
 # 契约 · 设计令牌
 
-源文件：`docs/design/tokens.json`（v1.0.0）
+源文件：`docs/design/tokens.json`（**v1.0.1 严格 DTCG**）
 生成物：`src/core/theme/tokens.generated.ts`（入库，CI 校验可复现）
 管线：`scripts/build-tokens.mjs`
 
 ## 变更
 
-- 2026-11-27 / T02 / 初版：别名表、非 DTCG 节点处理、平台换算、缺口清单
+- 2026-11-27 / T02 / 初版
+- 2026-11-27 / T02 / **对齐 tokens v1.0.1**：pm-bot 已修复引用断裂、补齐 DTCG 与缺口令牌、收敛字重、通过对比度门禁。本文随之改写；旧版的别名表降级为防御性校验。
 
 ---
 
-## 1. 内部 ID 别名（必须先归一）
+## 1. 结构（已核实）
 
-原型里泄漏了 OpenDesign 内部 ID。**不要修改 pm-bot 的原始文件**，在管线里按下表归一：
+```
+color · typography · spacing · radius · borderWidth · iconSize
+blur · opacity · elevation · zIndex · motion      ← 全部标准 $type + $value
+$extensions.hwpanel = { meta, layout, components } ← 非令牌的产品配置
+```
 
-| 内部 ID | 语义键 | 出现位置 | 次数 |
-|---|---|---|---|
-| `bg.heroGradient` | `bg.canvas` | 9 个 screen 的 `shell.backgroundToken` | 9 |
-| `bg.pillGlass` | `bg.pillGlass` | `03-dashboard` 服务器切换胶囊 | 1 |
-| `spacing.3` | `spacing.cardGap`（= `spacing.3` = 12） | `01`/`03`/`08` 列表 `gapToken` | 3 |
-| `spacing.4` | `spacing.cardPadding`（= `spacing.4` = 16） | `01` 卡片 `paddingToken` | 1 |
+- 已用脚本核验：**184 个叶子令牌，0 个结构错误**（无裸值、无缺 `$type`）。
+- `$extensions.hwpanel` 里的 `layout` / `components`（Tab 定义、阈值）**不是令牌**，管线单独输出为 `layoutConfig` / `appConfig`，不要混进 theme。
 
-管线遇到表外未知 ID 必须**报错退出**，不得静默 fallback——否则深色模式会在无人察觉时退化。
+## 2. 引用完整性（防御性校验，保留）
 
-## 2. 非 DTCG 节点
+v1.0.1 之前有 4 个 OpenDesign 内部 ID 泄漏在原型里。现已全部修复（重跑审计：**0 断裂引用**）。管线仍需保留这张别名表作为**兜底**，防止将来重新导出设计稿时再次带出：
 
-以下分组没有 `$value`/`$type`，标准 DTCG 解析会跳过：
-
-- `typography.scale.*`（`fontSize/lineHeight/fontWeight/letterSpacing`）
-- `typography.fontFamily.*`（有 `$value`，正常）
-- `layout.*`（纯数值，非令牌，建议作为 `layoutConfig` 输出）
-- `components.*`（Tab 定义与阈值，建议作为 `appConfig` 输出）
-
-处理方式（二选一，**已选 A**）：
-- **A（采用）**：管线按"裸值节点"读取，输出为 `theme.typography` / `layoutConfig` / `appConfig` 三段，不改 pm-bot 文件。
-- B：pm-bot 把三者改成 `$value`/`$type` 或移入 `$extensions`。留作二期清理。
-
-## 3. 语义键与主题
-
-`color.semantic.light` 与 `.dark` 各有 40 个键，键名完全对齐（已校验差集为空）。
-代码里只用裸键（`bg.surface`、`text.muted`…），由 `ThemeProvider` 按当前模式取 light/dark，**禁止**在业务代码写 `light.bg.surface`。
-
-## 4. 平台换算规则
-
-| 令牌 | 原值 | 换算 |
+| 内部 ID | 语义键 | 历史出现位置 |
 |---|---|---|
-| `letterSpacing` | `"-0.03em"` | `parseFloat × fontSize`（px 数值） |
-| `fontWeight` | `650` | iOS 保留；Android 归一到 `600`（或引入变量字体后保留） |
-| `elevation.*` | CSS shadow 字符串 | 解析成 `{shadowColor, shadowOffset:{w,h}, shadowOpacity, shadowRadius}`；Android 另给 `elevation` 整数 |
+| `bg.heroGradient` | `bg.canvas` | 9 个 screen 的 `shell.backgroundToken` |
+| `bg.pillGlass` | `bg.pillGlass` | `03-dashboard` 胶囊 |
+| `spacing.3` | `spacing.cardGap` | `01`/`03`/`08` 列表间距 |
+| `spacing.4` | `spacing.cardPadding` | `01` 卡片内边距 |
+
+**硬规则不变**：遇到表外未知 ID，管线报错退出，不得静默 fallback。
+
+## 3. 语义色
+
+`color.semantic.light` 与 `.dark` 键名完全对齐（已校验差集为空）。
+代码只用裸键（`bg.surface`、`text.muted`…），由 `ThemeProvider` 按当前模式取，**禁止**在业务代码写 `light.bg.surface`。
+
+## 4. 平台换算（RN / Expo）
+
+| 令牌 | v1.0.1 形态 | 换算 |
+|---|---|---|
+| `typography.scale.*` | `fontSize:"15px"`、`lineHeight:"22px"`、`letterSpacing:"0px"`、`fontWeight:400` | 去 `px` 转数字；`fontWeight` 取 `400/500/600/700`（已无 650） |
+| `typography.scale.*.$value.fontFamily` | `"{typography.fontFamily.sans}"` | 解析别名引用后再取字符串 |
+| `elevation.*` | `{offsetX,offsetY,blur,spread,color}` + `$extensions.hwpanel.androidElevation` | iOS：`shadowOffset/shadowRadius/shadowColor/shadowOpacity`；Android：`elevation: androidElevation` |
 | `motion.duration.*` | `"160ms"` | 整数毫秒 |
-| `motion.easing.standard` | `cubic-bezier(...)` | 转 reanimated `Easing.bezier(...)` 参数 |
-| `bg.*Glass` | `rgba(...)` + design-spec 的 `blur(18px)` | 颜色取令牌；**模糊半径需新增令牌**（见 §5） |
-| `radius.pill` | `999` | 直接用；大于高度即胶囊 |
+| `motion.easing.standard` | `cubic-bezier(...)` | reanimated `Easing.bezier(...)` |
+| `blur.tabBar` / `blur.pill` | `"18px"` / `"12px"` | expo-blur `intensity`/`experimentalBlurMethod` 需换算（见 §6） |
+| `radius.pill` | 数值 | 直接用 |
+| `opacity.disabled` | 数值 | 直接用 |
 
-## 5. 缺口令牌（建议补充，T02 落地时以常量先行）
+## 5. 缺口令牌（v1.0.1 已补齐，T02 逐项核对）
 
-| 用途 | 建议键 | 建议值 |
-|---|---|---|
-| Tab 栏/胶囊毛玻璃模糊 | `blur.glass` | `18` |
-| 禁用态整体透明度 | `opacity.disabled` | `0.45` |
-| 骨架屏底色 | `skeleton.base` / `skeleton.shine` | `bg.surfaceSoft` / `bg.segmentedTrack` |
-| 描边宽度 | `borderWidth.hairline` / `.focus` | `1` / `2` |
-| 图标尺寸档 | `icon.sm/md/lg` | `16` / `20` / `24` |
-| 图表轴与网格 | `chart.axis` / `chart.grid` | 浅 `text.subtle`/`border.hairline`；深 `text.subtle`/`border.hairline` |
-| 列表行按压覆盖 | `overlay.pressed` | 浅 `rgba(0,0,0,0.04)`；深 `rgba(255,255,255,0.06)` |
-| 弹窗层级 | `z.modal` / `z.toast` | `100` / `200` |
+`blur`（tabBar / pill）、`opacity`（禁用等）、`borderWidth`、`iconSize`、`zIndex`（modal / toast）、`skeleton`、图表轴与网格、按压叠加色——均已在 tokens.json 中，T02 只需消费，**不要再自造常量**。
 
-## 6. 可访问性
+## 6. expo-blur 适配（唯一需要实测的点）
 
-`text.subtle` 在浅色底（`bg.canvas` / `bg.surface`）上目测低于 AA 正文 4.5:1，且被用于占位符与时间戳。
-T02 必须跑一次自动对比度校验（WCAG 2.1 AA）：
+design token 给的是高斯模糊半径（px），`expo-blur` 的 `intensity` 是 0–100 的相对强度，两者不是线性等价。
+T02 需在真机上定标：`blur.tabBar = 18px` → 一个 `intensity` 值，写进 `src/core/theme/blur.ts` 并注明是实测值，而不是把 18 直接当 intensity。
 
-- 正文/辅助文字：≥ 4.5:1
-- 大字号（≥18pt 或 14pt 加粗）与图标/控件边界：≥ 3:1
+## 7. 对比度（已核验，T02 只需做回归门禁）
 
-不达标的键出一份清单给 pm-bot，**不要自行改色值**。
+浅/深 × 正文/次级/辅助/占位 在 `bg.surface` 与 `bg.canvas` 上共 16 组，实测全部 ≥ 4.5:1：
 
-## 7. 输出契约（TS）
+| | light surface | light canvas | dark surface | dark canvas |
+|---|---|---|---|---|
+| `text.primary` | 17.20 | 15.50 | 15.73 | 17.58 |
+| `text.secondary` | 11.21 | 10.10 | 11.53 | 12.89 |
+| `text.muted` | 6.30 | 5.68 | 6.79 | 7.59 |
+| `text.subtle` | 5.20 | **4.69** | 5.44 | 6.08 |
+
+`text.subtle` 浅色 canvas 上 4.69 是余量最小的一组（设计值 `#666D7B`）。T02 的门禁脚本按 4.5 判定；若 pm-bot 后续再调色，以脚本结果为准。
+
+## 8. 输出契约（TS）
 
 ```ts
 export type ThemeMode = 'system' | 'light' | 'dark';
-export type SemanticKey = keyof typeof lightSemantic;   // 40 键
+export type SemanticKey = keyof typeof lightSemantic;
+
 export interface Theme {
   mode: 'light' | 'dark';
   color: Record<SemanticKey, string>;
   typography: Record<TypeScaleKey, TextStyleSpec>;
   spacing: Record<SpacingKey, number>;
   radius: Record<RadiusKey, number>;
+  borderWidth: Record<BorderWidthKey, number>;
+  iconSize: Record<IconSizeKey, number>;
+  blur: Record<'tabBar'|'pill', number>;
+  opacity: number;
   elevation: Record<'card'|'floating'|'tabBar', ShadowSpec>;
   motion: { duration: Record<'fast'|'page'|'gauge', number>; easing: [number,number,number,number]; pressScale: number };
-  blur: { glass: number };
+  zIndex: Record<'modal'|'toast', number>;
 }
 ```

@@ -143,6 +143,6 @@ HWPanel 采用 **iOS & Android 统一品牌设计语言**，在以下平台原�
 ## 7. DTCG 令牌规范与自动校验基线（v1.0.1 修订）
 
 1. **严格 DTCG 结构**：`tokens.json` 中 `color` / `typography` / `spacing` / `radius` / `borderWidth` / `iconSize` / `blur` / `opacity` / `elevation` / `zIndex` / `motion` 全部节点采用标准 `$type` + `$value`；产品级元数据与布局常量归置于 `$extensions.hwpanel`，确保标准令牌生成器可直接解析。
-2. **跨平台字重与阴影映射**：字重收敛为 `400 / 500 / 600 / 700`（移除 Android Roboto 缺失的 `650`）；字距改为数值型 `px`；阴影改为结构化对象（`offsetX/offsetY/blur/spread/color`）并附带 `$extensions.hwpanel.androidElevation`，供 Flutter `BoxShadow` 与 Android Elevation 自动生成。
+2. **跨平台字重与阴影映射**：字重收敛为 `400 / 500 / 600 / 700`（移除 Android Roboto 缺失的 `650`）；字距改为数值型 `px`；阴影改为结构化对象（`offsetX/offsetY/blur/spread/color`）并附带 `$extensions.hwpanel.androidElevation`，供 React Native / Expo（iOS shadow 属性与 Android elevation）自动生成。
 3. **自动对比度门禁**：浅色与深色模式下，所有正文、次级文本与占位符/时间戳（`text.primary`、`text.secondary`、`text.muted`、`text.subtle`）在 `bg.surface` 与 `bg.canvas` 上均满足 **WCAG AA ≥ 4.5:1**（`text.subtle` 已在 v1.0.1 加深至浅色 `#666D7B` / 深色 `#8892A6`）。
 4. **预览同步约定**：`docs/design/preview.html` 仅供交互视觉评审参考；工程实现一律以 `docs/design/tokens.json` 自动生成的主题代码作为唯一真相源（Single Source of Truth）。
