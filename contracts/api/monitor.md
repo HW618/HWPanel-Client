@@ -25,29 +25,68 @@
 
 `:ioOption` / `:netOption` 传 `all` 取全量；有具体网卡/磁盘时传其标识。
 
-## 2. 客户端类型
+## 2. 实际返回字段（v2.5.1 实测）
+
+`GET /dashboard/base/:io/:net`：
+
+```
+hostname, os, platform, platformVersion, prettyDistro,
+kernelArch, kernelVersion, virtualizationSystem,
+cpuCores, cpuLogicalCores, cpuMhz, cpuModelName, ipV4Addr,
+appInstalledNumber, cronjobNumber, databaseNumber, websiteNumber, agentNumber,
+currentInfo, quickJump, systemProxy
+```
+
+注意：**基础信息里没有主机运行时长**，`uptime` 在 `current` 里。
+
+`GET /dashboard/current/:io/:net`：
+
+```
+cpuPercent / cpuUsedPercent / cpuTotal / cpuUsed / cpuDetailedPercent
+load1 / load5 / load15 / loadUsagePercent
+memoryTotal / memoryUsed / memoryAvailable / memoryUsedPercent / memoryCache / memoryShard
+swapMemoryTotal / swapMemoryUsed / swapMemoryAvailable / swapMemoryUsedPercent
+diskData, ioReadBytes, ioWriteBytes, ioReadTime, ioWriteTime, ioCount
+netBytesSent, netBytesRecv
+procs, topCPUItems, topMemItems
+uptime, timeSinceUptime, runningTime, shotTime
+gpuData, npuData, xpuData
+```
+
+`GET /hosts/monitor/setting`：
+
+```
+monitorStatus: "Enable" | "Disable"
+monitorInterval: "300"        // 秒
+monitorStoreDays: 7
+defaultIO, defaultNetwork
+```
+
+**没有面板版本号**——版本在 `POST /settings/search` 的 `systemVersion`（实测 `v2.5.1`）。
+
+## 2.1 客户端类型
 
 ```ts
 export interface HostSummary {
-  hostname: string;
-  os: string;
-  uptime: string;
-  panelVersion: string;
+  hostname: string; os: string; platformVersion?: string;
+  kernelArch: string; kernelVersion: string;
+  cpuCores: number; cpuLogicalCores: number; cpuModelName: string;
+  uptimeSeconds: number;            // ← 来自 /dashboard/current 的 uptime
+  panelVersion?: string;            // ← 来自 /settings/search 的 systemVersion
 }
 
 export interface ResourceSnapshot {
-  cpu:   { percent: number; cores: number };
-  memory:{ percent: number; usedGB: number; totalGB: number };
-  swap:  { percent: number; used: string; total: string };
-  load:  { l1: number; l5: number; l15: number };
-  disk:  { rootPercent: number; rootUsed: string; rootTotal: string; mountCount: number;
-           readSpeed: string; writeSpeed: string };
-  net:   { interfaceName: string; upSpeed: string; downSpeed: string;
-           totalSent: string; totalRecv: string };
+  cpuPercent: number;
+  load: { l1: number; l5: number; l15: number };
+  memory: { total: number; used: number; percent: number };
+  swap:   { total: number; used: number; percent: number };
+  diskData: DiskRow[];              // 元素字段待展开
+  io:     { readBytes: number; writeBytes: number };
+  net:    { sent: number; recv: number };
 }
 
 export interface ProcessRow {
-  name: string; pid: number; user?: string;
+  pid: number; name: string; user?: string;
   cpuPercent: number; memMB: number; memPercent: number;
 }
 

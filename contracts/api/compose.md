@@ -17,7 +17,7 @@
 | ✅ | POST | `/containers/compose/test` | 服务端 YAML 校验（可选，客户端已先校验） |
 | ✅ | POST | `/containers/compose/clean/log` | 清理编排日志 |
 | 🟡 | POST | `/containers/compose/env` | 读取编排文件与环境变量（请求体 `{path}`）；**已核实**是前端取编排内容的入口，返回形态待回填 |
-| ⬜ | — | 编排日志读取 | **U2 未完全解开**：路由与前端 API 模块里都没有独立的编排日志端点；候选是用 `GET /containers/search/log` 带编排名过滤，需真实面板确认 |
+| ✅ | GET | `/containers/search/log?compose=<path>` | **编排日志 = 同一个 SSE 端点**，把 `container=` 换成 `compose=`（传 docker-compose 文件绝对路径）。U2 已解 |
 
 未列入的（新建编排、模板、pin）**一期禁止调用**：一期只支持查看与修改已有编排。
 
@@ -69,4 +69,21 @@ export interface ComposeDetail extends ComposeSummary {
 2. `POST /containers/compose/env` 以 `{path}` 为参数，是前端读取编排内容的入口。
 3. `POST /containers/compose/update` 前端超时是 **10 分钟**——保存并重建是长请求，客户端超时不得用默认 15s，必须单独设。
 
-**仍未决（U2 剩余）：** 编排日志的确切读取方式。在确认前，`ComposeDetail.yaml` 与日志读取都必须包在 `useComposeYaml()` / `useComposeLogs()` 背后，只改 hook 实现，不改页面。
+4. **`POST /containers/compose/search` 实测返回**（`{page,pageSize}` 分页）：
+
+```json
+{"total":3,"items":[{
+  "name":"3x-ui","createdAt":"...","createdBy":"1Panel",
+  "containerCount":1,"runningCount":1,
+  "configFile":"/opt/1panel/docker/compose/3x-ui/docker-compose.yml",
+  "workdir":"/opt/1panel/docker/compose/3x-ui",
+  "composeFileExists":true,"isPinned":false,
+  "path":"/opt/1panel/docker/compose/3x-ui/docker-compose.yml",
+  "containers":[{"containerID":"...","name":"3x-ui","createTime":"...","state":"running","ports":[]}],
+  "env":""
+}]}
+```
+
+注意：`path` 与 `configFile` 在实测样本里是**单个文件**；`path` 逗号多文件的情况仍需在别的面板上确认，客户端按"可能多文件"写但不假设一定有多个。
+
+5. **U2 已解**：编排日志走 `GET /containers/search/log?compose=<path>` 的 SSE，与容器日志同一个端点、同一套 `Accept: text/event-stream` 与 base64 载荷。见 `container.md` §4。

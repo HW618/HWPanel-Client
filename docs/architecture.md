@@ -47,6 +47,11 @@ RN 的 `fetch`/`XMLHttpRequest` 走系统网络栈，**无法按请求关闭证�
 - **绝不做全局 trust-all**，也不写 `NSAllowsArbitraryLoads`：放宽范围严格等于该条服务器配置。
 - WebSocket（如安装任务日志走 WS）必须复用同一套信任配置，不能退回全局 `WebSocket`。
 
+`PanelTransport` 还要负责两件已在真实面板验证过的事：
+
+- **每服务器一个 Cookie 罐** + 非 GET 请求注入 `X-CSRF-Token`（会话模式）。
+- **SSE 日志流**：容器/编排日志是 `text/event-stream`，事件体是 base64。RN 的 `EventSource` 不能设请求头，必须自己实现（`fetch` + `ReadableStream` + 自定义头），否则 API-Key 模式根本连不上。
+
 > T01 必须先交付一个最小可用的 `hwp-transport`（含 iOS/Android 各一条自签证书联通用例），否则 T05 无法验收 AC-02.3。若 Expo Module 路线受阻，回退方案是 dev client 内嵌原生模块 + EAS 自定义构建；**不允许**把 `allowSelfSigned` 降级成"忽略所有证书"。
 
 ---
@@ -142,8 +147,8 @@ status?: number        // HTTP 状态
 |---|---|---|
 | U1 | **已解** | 入口不是 URL 前缀：登录类请求带 `EntranceCode: base64(entrance)` 头，`baseURL=/api/v2`。会话语义见 `contracts/api/auth.md` §4 |
 | U3 | **已解** | 安装/升级任务日志是**轮询** `POST /logs/tasks/read`，间隔 3s，无 WebSocket。见 `contracts/api/app.md` §4 |
-| U2 | **部分解开** | YAML 经 `POST /containers/compose/env{path}` 读取，且一个编排可能对应多个 YAML 文件；编排日志端点仍未找到，待真实面板确认 |
-| U4 | **部分解开** | `/dashboard/base/os` 不含面板版本；候选 `POST /settings/search`，待确认 |
+| U2 | **已解** | 编排日志 = `GET /containers/search/log?compose=<path>` 的 **SSE**（与容器日志同一端点）；YAML 经 `POST /containers/compose/env{path}` |
+| U4 | **已解** | 面板版本在 `POST /settings/search` 的 `systemVersion`（实测 `v2.5.1`） |
 | U5 | 未解 | 完整只读进程列表是否必须走 `/process/ws` |
 
 会话模式还有一个此前没写进架构的实现约束：**每个服务器一个 Cookie 罐**（RN 的 fetch 不自动持久化 Cookie），非 GET 请求要从 `pcsrftoken` Cookie 取 CSRF 令牌放进 `X-CSRF-Token`。这属于 `PanelTransport` 的职责，不是各 feature 的。

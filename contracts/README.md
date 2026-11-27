@@ -37,17 +37,29 @@ contracts/
 
 1. 改契约 → 2. 在对应文件顶部 `## 变更` 追加一行（日期 / 切片编号 / 一句话）→ 3. 同步 `src/contracts/**` 的 TS 类型 → 4. PR 描述里引用。
 
-## 5. 客户端统一包络
-
-所有 REST 响应按上游包络解析：
+## 5. 客户端统一包络（已在 v2.5.1 真实面板验证）
 
 ```ts
 interface PanelEnvelope<T> {
-  code: number;    // 上游约定 200 为成功 🟡 以真实响应为准
+  code: number;    // 200 = 成功
   message: string;
   data: T;
 }
 ```
 
-`code !== 200`（或等价成功判定）→ 转成 `PanelError`，见 `domain/errors.md`。
-**业务层永远拿不到原始包络**，只拿 `data` 或抛 `PanelError`。
+**关键：HTTP 状态码恒为 200**，成功/失败只看 body 里的 `code`。
+
+实测（未带凭据时）：
+
+```
+HTTP/1.1 200
+{"code":401,"message":"用户未登录: 当前会话已过期！","data":null}
+```
+
+因此 HTTP 拦截器不能按 4xx/5xx 判错；必须先解析 body 再分流。唯一例外是网络层失败（连接、TLS、超时），那些没有 body。
+
+`code !== 200` → 转 `PanelError`（`domain/errors.md`）。业务层只拿 `data` 或 `PanelError`。
+
+## 6. 已验证环境
+
+`2026-11-27` 对着 owner 提供的 `1Panel v2.5.1`（Ubuntu 24.04）跑通：API-Key 鉴权、`/dashboard/*`、`/containers/*`、`/settings/search`、SSE 日志流。标 ✅ 的字段来自真实响应，不是推断。

@@ -36,9 +36,15 @@
 1Panel-Signature-Version : <签名版本>
 ```
 
-- 签名：HMAC-SHA256；时间窗口由面板 `ApiKeyValidityTime` 决定。
+- 签名算法（源码 `core/app/auth/api_auth.go`，**已在真实面板跑通**）：
+  - `v1` / `md5`：`token = md5("1panel" + apiKey + timestamp)`
+  - `hmac-sha256`：`token = HMAC(key=apiKey, msg="1panel:" + timestamp)`，HMAC 用 SHA-256
+  - token 头名的字面量以 `core/app/auth/api_auth.go` 第 51 行 `c.GetHeader(...)` 为准；若与本文件显示不一致，以源码为准
+  - `1Panel-Signature-Version` 不填则两种都接受；建议显式填 `v1`。
+- 时间戳：Unix **秒**；服务端要求 `ts ≤ now+60` 且 `now-ts ≤ validity*60+60`。
 - 失败 key：`ErrApiConfigStatusInvalid`（未启用 API 接口）、`ErrApiConfigKeyTimeInvalid`、`ErrApiConfigKeyInvalid`、`ErrApiConfigIPInvalid`。
-- API-Key 模式**不走 Cookie/CSRF**（无会话）。
+- API-Key 模式**不走 Cookie/CSRF**（无会话），也**不需要** `EntranceCode`（已实测）。
+- SSE 日志端点在 API-Key 模式下同样可用（已实测）。
 
 ### 3.2 用户名密码（会话）
 
