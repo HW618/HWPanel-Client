@@ -57,18 +57,34 @@ export type AppAction = 'start'|'stop'|'restart'|'upgrade'|'uninstall';
 3. 错误内联到字段下方，不用 Toast。
 4. 提交成功后跳「任务进度与日志页」，携带 `taskId`。
 
-## 4. 异步任务（U3 抽象）
+## 4. 异步任务日志 — U3 已解（轮询，不是 WebSocket）
+
+已从上游前端核实：安装/升级任务日志走**轮询**，间隔 **3 秒**，无 WebSocket。
+
+| 标记 | 方法 | 路径 | 用途 |
+|---|---|---|---|
+| ✅ | POST | `/logs/tasks/read` | 按行读取任务日志（前端超时 40s） |
+| ✅ | POST | `/logs/tasks/search` | 任务列表/历史 |
+| ✅ | GET | `/logs/tasks/executing/count` | 正在执行的任务数 |
+
+请求体（`Log.TaskLogReadReq`）：至少包含 `taskID` 与行偏移；返回增量行。
 
 ```ts
 interface TaskStream {
   subscribe(taskId: string, onEvent: (e: TaskEvent) => void): () => void; // 返回取消函数
 }
-type TaskEvent = { kind: 'log'; line: string } | { kind: 'status'; status: 'running'|'success'|'failed' } | { kind: 'progress'; percent?: number };
+type TaskEvent =
+  | { kind: 'log'; lines: string[] }
+  | { kind: 'status'; status: 'running' | 'success' | 'failed' }
+  | { kind: 'progress'; percent?: number };
 ```
 
-- 页面只依赖 `TaskStream`，**不直接 new WebSocket / 不直接轮询**。
-- 离开页面必须取消订阅；回到页面用 `taskId` 重新订阅（任务可能已结束 → 先查状态再决定是否回放日志）。
-- WS 连接必须走 `PanelTransport` 的信任配置（自签名服务器同样要能连）。
+规则：
+
+1. 页面只依赖 `TaskStream`，不直接 `setInterval`。实现内部按 3 秒轮询 `/logs/tasks/read`。
+2. 离开页面必须取消订阅；回来先拉一次当前状态，再决定是否继续轮询（任务可能已结束）。
+3. 轮询到 `status !== running` 即停，不要无限拉。
+4. 增量拼接用行偏移，避免重复渲染整段日志。
 
 ## 5. 卸载（AC-05.2）
 

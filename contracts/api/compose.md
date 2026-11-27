@@ -16,8 +16,8 @@
 | ✅ | POST | `/containers/compose/env` | 读取编排环境变量 |
 | ✅ | POST | `/containers/compose/test` | 服务端 YAML 校验（可选，客户端已先校验） |
 | ✅ | POST | `/containers/compose/clean/log` | 清理编排日志 |
-| ⬜ | — | 编排日志读取 | **U2**：路由中无独立端点，暂定 `GET /containers/search/log` 按编排过滤 |
-| ⬜ | — | 编排 YAML 读取 | **U2**：暂定 `POST /containers/compose/env` 或 `info` 携带 |
+| 🟡 | POST | `/containers/compose/env` | 读取编排文件与环境变量（请求体 `{path}`）；**已核实**是前端取编排内容的入口，返回形态待回填 |
+| ⬜ | — | 编排日志读取 | **U2 未完全解开**：路由与前端 API 模块里都没有独立的编排日志端点；候选是用 `GET /containers/search/log` 带编排名过滤，需真实面板确认 |
 
 未列入的（新建编排、模板、pin）**一期禁止调用**：一期只支持查看与修改已有编排。
 
@@ -61,6 +61,12 @@ export interface ComposeDetail extends ComposeSummary {
 3. 重建：警告色，文案含"业务会短暂中断"。
 4. 编排下子容器点击可跳转容器详情（`/tabs/containers/container/:id`），导航上下文保留在 Tab 2 的 Stack 内。
 
-## 5. 未决
+## 5. 已核实与未决
 
-**U2**：编排日志与 YAML 的实际读取方式。在确认前，`ComposeDetail.yaml` 与日志读取都必须包在 `useComposeYaml()` / `useComposeLogs()` 背后，只改 hook 实现，不改页面。
+**已核实（来自上游前端）：**
+
+1. **一个编排可能对应多个 YAML 文件**——`ComposeInfo.path` 是逗号分隔的多路径，前端按 `path.split(',')` 生成选择器。U2 的 YAML 读取必须支持多文件，不能假设只有一个 `docker-compose.yml`。
+2. `POST /containers/compose/env` 以 `{path}` 为参数，是前端读取编排内容的入口。
+3. `POST /containers/compose/update` 前端超时是 **10 分钟**——保存并重建是长请求，客户端超时不得用默认 15s，必须单独设。
+
+**仍未决（U2 剩余）：** 编排日志的确切读取方式。在确认前，`ComposeDetail.yaml` 与日志读取都必须包在 `useComposeYaml()` / `useComposeLogs()` 背后，只改 hook 实现，不改页面。

@@ -136,14 +136,17 @@ status?: number        // HTTP 状态
 
 ---
 
-## 8. 已知未决（阻塞对应切片，不阻塞脚手架）
+## 8. 未决与已解（源码核实，2026-11-27）
 
-| # | 未决 | 影响 | 处置 |
-|---|---|---|---|
-| U1 | Entrance 与 `/api/v2` 的拼接方式（路径前缀 / Cookie / 请求头） | T05、所有请求 URL | 用真实面板抓一次登录请求后回填 `contracts/api/auth.md` |
-| U2 | Compose 的日志与 YAML 读取入口 | T09 | 先按 `containers/search/log` 按 compose 过滤实现，契约留可替换点 |
-| U3 | 应用安装/升级异步日志通道（WS 还是轮询） | T10 一半工作量 | 契约抽象为 `TaskStream`，两种实现都留接口 |
-| U4 | 版本号读取端点 | T05 兼容提示 | 在实现时确认，契约只要求"能拿到 version" |
+| # | 状态 | 结论 / 剩余 |
+|---|---|---|
+| U1 | **已解** | 入口不是 URL 前缀：登录类请求带 `EntranceCode: base64(entrance)` 头，`baseURL=/api/v2`。会话语义见 `contracts/api/auth.md` §4 |
+| U3 | **已解** | 安装/升级任务日志是**轮询** `POST /logs/tasks/read`，间隔 3s，无 WebSocket。见 `contracts/api/app.md` §4 |
+| U2 | **部分解开** | YAML 经 `POST /containers/compose/env{path}` 读取，且一个编排可能对应多个 YAML 文件；编排日志端点仍未找到，待真实面板确认 |
+| U4 | **部分解开** | `/dashboard/base/os` 不含面板版本；候选 `POST /settings/search`，待确认 |
+| U5 | 未解 | 完整只读进程列表是否必须走 `/process/ws` |
+
+会话模式还有一个此前没写进架构的实现约束：**每个服务器一个 Cookie 罐**（RN 的 fetch 不自动持久化 Cookie），非 GET 请求要从 `pcsrftoken` Cookie 取 CSRF 令牌放进 `X-CSRF-Token`。这属于 `PanelTransport` 的职责，不是各 feature 的。
 
 ---
 

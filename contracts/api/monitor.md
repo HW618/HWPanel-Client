@@ -67,4 +67,4 @@ export type HistoryRange = '1h' | '6h' | '24h';
 ## 4. 未决
 
 - **U5**：`/process/ws` 是否为完整进程列表的唯一来源。若必须走 WS，`PanelTransport` 需要 `openProcessStream()`，并纳入自签名证书信任范围。
-- **U4**：面板版本号的确切来源端点，与 `auth.md` 共用结论。
+- **U4 进展**：`/dashboard/base/os` 已核实只返回 `os/platform/platformFamily/kernelArch/kernelVersion/diskSize`，**不含面板版本**。候选是 `POST /settings/search`，待真实面板确认。见 `auth.md` §5。
